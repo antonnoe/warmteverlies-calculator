@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warmteverlies Calculator Frankrijk - InfoFrankrijk.com</title>
     <meta name="description" content="Bereken het warmteverlies van je Franse woning. Inclusief klimaatzones, U-waarden en actuele energieprijzen 2024.">
-    <meta name="keywords" content="warmteverlies, isolatie, frankrijk, energiebesparing, nederlandse expats, u-waarde, dpe">
+    <meta name="keywords" content="warmteverlies, isolatie, frankrijk, energiebesparing, nederlandse expats, u-waarde, dpe, zonnepanelen">
     <meta name="author" content="Communities Abroad">
     
     <!-- Open Graph voor social sharing -->
@@ -37,6 +37,20 @@
         
         h1, h2 {
             color: #800000 !important;
+        }
+        
+        /* Sticky kostenoverzicht */
+        .sticky-costs {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 1024px) {
+            .sticky-costs {
+                position: static;
+            }
         }
         
         /* Custom scrollbar */
@@ -122,6 +136,17 @@
             opacity: 1;
         }
         
+        /* Input number styling */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
         /* Responsive iframe height */
         @media (max-width: 768px) {
             .calculator-container {
@@ -194,6 +219,7 @@
         const TrendingDown = () => <span>📉</span>;
         const MapPin = () => <span>📍</span>;
         const HelpCircle = () => <span style={{color: '#800000'}}>❓</span>;
+        const Sun = () => <span>☀️</span>;
 
         const WarmteverliesCalculator = () => {
             const [inputs, setInputs] = useState({
@@ -211,7 +237,7 @@
                 
                 // Temperaturen (°C)
                 binnenTemp: 20,
-                buitenTemp: 0,
+                // buitenTemp wordt automatisch gezet via klimaatzone
                 
                 // Locatie
                 klimaatzone: 'H2a',
@@ -227,7 +253,12 @@
                 bijverwarmingPercentage: 20,
                 
                 // Hoofdverwarming
-                hoofdverwarmingType: 'gas' // gas, elektriciteit, fioul
+                hoofdverwarmingType: 'gas', // gas, elektriciteit, fioul
+                
+                // Zonnepanelen
+                zonnepanelenAantal: 0,
+                zonnepanelenOrientatie: 'zuid', // zuid, zuidwest, zuidoost, oost, west
+                zonnepanelenHelling: 'optimaal' // vlak, optimaal, steil
             });
 
             const [results, setResults] = useState({});
@@ -242,14 +273,14 @@
             });
 
             const klimaatzones = {
-                'H1a': { naam: 'H1a - Noordoost (Reims, Metz)', factor: 1.2, gemTemp: -5, verwarmingsDagen: 200 },
-                'H1b': { naam: 'H1b - Noord/Centrum (Parijs, Lille)', factor: 1.1, gemTemp: -3, verwarmingsDagen: 185 },
-                'H1c': { naam: 'H1c - West (Brest, Caen)', factor: 1.0, gemTemp: 2, verwarmingsDagen: 175 },
-                'H2a': { naam: 'H2a - Midden-west (Poitiers, Tours)', factor: 0.9, gemTemp: 0, verwarmingsDagen: 170 },
-                'H2b': { naam: 'H2b - Midden-oost (Lyon, Dijon)', factor: 0.95, gemTemp: -2, verwarmingsDagen: 180 },
-                'H2c': { naam: 'H2c - Zuidwest (Bordeaux, Toulouse)', factor: 0.8, gemTemp: 3, verwarmingsDagen: 155 },
-                'H2d': { naam: 'H2d - Zuidoost (Avignon, Montpellier)', factor: 0.7, gemTemp: 4, verwarmingsDagen: 145 },
-                'H3': { naam: 'H3 - Mediterraan (Nice, Marseille)', factor: 0.6, gemTemp: 6, verwarmingsDagen: 120 }
+                'H1a': { naam: 'H1a - Noordoost (Reims, Metz)', factor: 1.2, gemTemp: -5, verwarmingsDagen: 200, zonOpbrengst: 1050 },
+                'H1b': { naam: 'H1b - Noord/Centrum (Parijs, Lille)', factor: 1.1, gemTemp: -3, verwarmingsDagen: 185, zonOpbrengst: 1100 },
+                'H1c': { naam: 'H1c - West (Brest, Caen)', factor: 1.0, gemTemp: 2, verwarmingsDagen: 175, zonOpbrengst: 1000 },
+                'H2a': { naam: 'H2a - Midden-west (Poitiers, Tours)', factor: 0.9, gemTemp: 0, verwarmingsDagen: 170, zonOpbrengst: 1250 },
+                'H2b': { naam: 'H2b - Midden-oost (Lyon, Dijon)', factor: 0.95, gemTemp: -2, verwarmingsDagen: 180, zonOpbrengst: 1200 },
+                'H2c': { naam: 'H2c - Zuidwest (Bordeaux, Toulouse)', factor: 0.8, gemTemp: 3, verwarmingsDagen: 155, zonOpbrengst: 1350 },
+                'H2d': { naam: 'H2d - Zuidoost (Avignon, Montpellier)', factor: 0.7, gemTemp: 4, verwarmingsDagen: 145, zonOpbrengst: 1450 },
+                'H3': { naam: 'H3 - Mediterraan (Nice, Marseille)', factor: 0.6, gemTemp: 6, verwarmingsDagen: 120, zonOpbrengst: 1500 }
             };
 
             const uWaardePresets = {
@@ -286,6 +317,20 @@
                 'weekend': { naam: 'Alleen weekends', factor: 0.25 }
             };
 
+            const zonOrientatieFactoren = {
+                'zuid': 1.0,
+                'zuidwest': 0.95,
+                'zuidoost': 0.95,
+                'oost': 0.85,
+                'west': 0.85
+            };
+
+            const zonHellingFactoren = {
+                'vlak': 0.85,
+                'optimaal': 1.0,
+                'steil': 0.9
+            };
+
             // Load energy prices on mount
             useEffect(() => {
                 window.ENERGY_API.getCurrentPrices().then(prices => {
@@ -293,15 +338,10 @@
                 });
             }, []);
 
-            // Update buitentemperatuur when klimaatzone changes
-            useEffect(() => {
-                if (inputs.klimaatzone && klimaatzones[inputs.klimaatzone]) {
-                    setInputs(prev => ({
-                        ...prev,
-                        buitenTemp: klimaatzones[inputs.klimaatzone].gemTemp
-                    }));
-                }
-            }, [inputs.klimaatzone]);
+            // Update buitentemperatuur when klimaatzone changes - AUTOMATISCH
+            const getBuitenTemperatuur = () => {
+                return klimaatzones[inputs.klimaatzone]?.gemTemp || 0;
+            };
 
             useEffect(() => {
                 try {
@@ -321,7 +361,8 @@
             }, [inputs, energyPrices]);
 
             const calculateHeatLoss = () => {
-                const tempDiff = Math.abs(inputs.binnenTemp - inputs.buitenTemp);
+                const buitenTemp = getBuitenTemperatuur();
+                const tempDiff = Math.abs(inputs.binnenTemp - buitenTemp);
                 const klimaatInfo = klimaatzones[inputs.klimaatzone] || klimaatzones['H2a'];
                 const klimaatFactor = klimaatInfo.factor;
                 
@@ -364,19 +405,31 @@
                 const hoofdverwarmingKwh = jaarlijkseKwh * hoofdverwarmingPercentage;
                 const bijverwarmingKwh = jaarlijkseKwh * (1 - hoofdverwarmingPercentage);
                 
+                // Zonnepanelen opbrengst
+                const zonOpbrengstPerPaneel = klimaatInfo.zonOpbrengst || 1200;
+                const orientatieFactor = zonOrientatieFactoren[inputs.zonnepanelenOrientatie] || 1.0;
+                const hellingFactor = zonHellingFactoren[inputs.zonnepanelenHelling] || 1.0;
+                const totaalZonOpbrengst = inputs.zonnepanelenAantal * zonOpbrengstPerPaneel * orientatieFactor * hellingFactor;
+                
+                // Alleen aftrekken van elektriciteitskosten (eigen verbruik ~70%)
+                const eigenVerbruikPercentage = 0.7;
+                const zonBesparingKwh = totaalZonOpbrengst * eigenVerbruikPercentage;
+                
                 // Kosten berekenen
                 let hoofdverwarmingKosten = 0;
                 if (inputs.hoofdverwarmingType === 'gas') {
                     hoofdverwarmingKosten = hoofdverwarmingKwh * energyPrices.gas;
                 } else if (inputs.hoofdverwarmingType === 'elektriciteit') {
-                    hoofdverwarmingKosten = hoofdverwarmingKwh * energyPrices.electricity;
+                    const nettoElektriciteitsKwh = Math.max(0, hoofdverwarmingKwh - zonBesparingKwh);
+                    hoofdverwarmingKosten = nettoElektriciteitsKwh * energyPrices.electricity;
                 } else if (inputs.hoofdverwarmingType === 'fioul') {
                     hoofdverwarmingKosten = hoofdverwarmingKwh * energyPrices.fioul * 0.1; // Rough conversion
                 }
                 
                 let bijverwarmingKosten = 0;
                 if (inputs.bijverwarmingType === 'elektrisch') {
-                    bijverwarmingKosten = bijverwarmingKwh * energyPrices.electricity;
+                    const nettoBijverwarmingKwh = Math.max(0, bijverwarmingKwh - Math.max(0, zonBesparingKwh - hoofdverwarmingKwh));
+                    bijverwarmingKosten = nettoBijverwarmingKwh * energyPrices.electricity;
                 } else if (inputs.bijverwarmingType === 'pellets') {
                     bijverwarmingKosten = bijverwarmingKwh * energyPrices.pellets * 0.2; // Rough conversion
                 } else if (inputs.bijverwarmingType === 'hout') {
@@ -387,8 +440,10 @@
                 
                 // Vergelijking met andere systemen
                 const jaarlijkseKostenGas = jaarlijkseKwh * energyPrices.gas;
-                const jaarlijkseKostenElektriciteit = jaarlijkseKwh * energyPrices.electricity;
+                const jaarlijkseKostenElektriciteit = Math.max(0, (jaarlijkseKwh - zonBesparingKwh)) * energyPrices.electricity;
                 const jaarlijkseKostenFioul = jaarlijkseKwh * energyPrices.fioul * 0.1;
+                
+                const zonBesparing = zonBesparingKwh * energyPrices.electricity;
                 
                 setResults({
                     muurVerlies,
@@ -406,6 +461,9 @@
                     jaarlijkseKostenFioul,
                     besparing: jaarlijkseKostenElektriciteit - jaarlijkseKostenGas,
                     verwarmingsDagen: Math.round(verwarmingsDagen),
+                    totaalZonOpbrengst,
+                    zonBesparing,
+                    buitenTemperatuur: buitenTemp,
                     percentages: {
                         muur: (muurVerlies / bruttoVerlies) * 100 || 0,
                         raam: (raamVerlies / bruttoVerlies) * 100 || 0,
@@ -418,17 +476,17 @@
             const updateInput = (field, value) => {
                 setInputs(prev => {
                     // Handle temperature inputs specially to prevent formatting issues
-                    if (field === 'binnenTemp' || field === 'buitenTemp') {
-                        const numValue = value === '' ? 0 : parseFloat(value);
-                        if (isNaN(numValue)) return prev;
-                        return { ...prev, [field]: numValue };
+                    if (field === 'binnenTemp') {
+                        const numValue = value === '' ? '' : parseFloat(value);
+                        if (value !== '' && isNaN(numValue)) return prev;
+                        return { ...prev, [field]: value === '' ? '' : numValue };
                     }
                     
                     // Handle numeric inputs
                     if (typeof prev[field] === 'number') {
-                        const numValue = value === '' ? 0 : parseFloat(value);
-                        if (isNaN(numValue)) return prev;
-                        return { ...prev, [field]: numValue };
+                        const numValue = value === '' ? '' : parseFloat(value);
+                        if (value !== '' && isNaN(numValue)) return prev;
+                        return { ...prev, [field]: value === '' ? '' : numValue };
                     }
                     
                     // Handle string inputs
@@ -556,6 +614,16 @@
                                     Vloer: {(results.percentages?.vloer || 0).toFixed(1)}%
                                 </text>
                                 
+                                {/* Zonnepanelen op dak */}
+                                {inputs.zonnepanelenAantal > 0 && (
+                                    <>
+                                        <rect x="130" y="60" width="40" height="25" fill="#FFD700" stroke="#333" strokeWidth="1" />
+                                        <text x="150" y="75" textAnchor="middle" className="text-xs font-bold">
+                                            ☀️ {inputs.zonnepanelenAantal}
+                                        </text>
+                                    </>
+                                )}
+                                
                                 {/* Legende */}
                                 <g transform="translate(10, 10)">
                                     <rect x="0" y="0" width="15" height="10" fill="#44aa44" />
@@ -586,6 +654,37 @@
                 </div>
             );
 
+            const StickyKostenoverzicht = () => (
+                <div className="sticky-costs">
+                    <div className="bg-white p-4 rounded-lg border shadow-lg">
+                        <h3 className="text-lg font-bold mb-3 text-brand-red flex items-center gap-2">
+                            <Euro />
+                            Jaarlijkse Kosten
+                        </h3>
+                        <div className="space-y-2">
+                            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium">Jouw configuratie:</span>
+                                    <span className="text-xl font-bold text-purple-700">
+                                        €{(results.totaleJaarKosten || 0).toFixed(0)}
+                                    </span>
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                    {inputs.hoofdverwarmingType}
+                                    {inputs.bijverwarmingType !== 'geen' && ` + ${inputs.bijverwarmingType}`}
+                                    {inputs.zonnepanelenAantal > 0 && ` + ${inputs.zonnepanelenAantal} zonnepanelen`}
+                                </div>
+                            </div>
+                            {inputs.zonnepanelenAantal > 0 && (
+                                <div className="p-2 bg-yellow-50 rounded text-xs">
+                                    <strong>Zonbesparing:</strong> €{(results.zonBesparing || 0).toFixed(0)}/jaar
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+
             return (
                 <div className="max-w-6xl mx-auto p-4 bg-gray-50 min-h-screen">
                     {/* Header */}
@@ -600,9 +699,9 @@
                         </div>
                     </div>
 
-                    <div className="grid lg:grid-cols-2 gap-6">
+                    <div className="grid lg:grid-cols-3 gap-6">
                         {/* Input Sectie */}
-                        <div className="space-y-6">
+                        <div className="lg:col-span-2 space-y-6">
                             {/* Klimaatzone */}
                             <div className="bg-white p-6 rounded-lg border shadow-sm">
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-brand-red">
@@ -621,29 +720,20 @@
                                                 <option key={code} value={code}>{info.naam}</option>
                                             ))}
                                         </select>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Automatisch: {results.buitenTemperatuur || getBuitenTemperatuur()}°C buitentemperatuur winter
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2 text-gray-700">Binnen temperatuur (°C)</label>
-                                            <input 
-                                                type="number" 
-                                                value={inputs.binnenTemp}
-                                                onChange={(e) => updateInput('binnenTemp', e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2 text-gray-700">Winter buiten temp (°C)</label>
-                                            <input 
-                                                type="number" 
-                                                value={inputs.buitenTemp}
-                                                onChange={(e) => updateInput('buitenTemp', e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
-                                            />
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                Automatisch ingesteld op basis van klimaatzone
-                                            </div>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-gray-700">Gewenste binnen temperatuur (°C)</label>
+                                        <input 
+                                            type="number" 
+                                            value={inputs.binnenTemp}
+                                            onChange={(e) => updateInput('binnenTemp', e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            min="15"
+                                            max="25"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -742,6 +832,64 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div className="text-xs text-gray-600 italic p-3 bg-yellow-50 rounded">
+                                        *Prijzen voor stookhout of pellets niet inbegrepen in deze rekenmodule
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Zonnepanelen */}
+                            <div className="bg-white p-6 rounded-lg border shadow-sm">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-brand-red">
+                                    <Sun />
+                                    Zonnepanelen (optioneel)
+                                </h2>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-gray-700">Aantal zonnepanelen</label>
+                                        <input 
+                                            type="number" 
+                                            value={inputs.zonnepanelenAantal || ''}
+                                            onChange={(e) => updateInput('zonnepanelenAantal', e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            min="0"
+                                            max="50"
+                                            placeholder="0"
+                                        />
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Opbrengst in {inputs.klimaatzone}: ~{klimaatzones[inputs.klimaatzone]?.zonOpbrengst || 1200} kWh/paneel/jaar
+                                        </div>
+                                    </div>
+                                    {inputs.zonnepanelenAantal > 0 && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-gray-700">Oriëntatie</label>
+                                                <select 
+                                                    value={inputs.zonnepanelenOrientatie}
+                                                    onChange={(e) => updateInput('zonnepanelenOrientatie', e.target.value)}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                                >
+                                                    <option value="zuid">Zuid (optimaal)</option>
+                                                    <option value="zuidwest">Zuidwest</option>
+                                                    <option value="zuidoost">Zuidoost</option>
+                                                    <option value="oost">Oost</option>
+                                                    <option value="west">West</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-gray-700">Hellingshoek</label>
+                                                <select 
+                                                    value={inputs.zonnepanelenHelling}
+                                                    onChange={(e) => updateInput('zonnepanelenHelling', e.target.value)}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                                >
+                                                    <option value="vlak">Vlak dak (0-15°)</option>
+                                                    <option value="optimaal">Optimaal (30-45°)</option>
+                                                    <option value="steil">Steil dak (45°+)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -756,36 +904,44 @@
                                         <label className="block text-sm font-medium mb-2 text-gray-700">Buitenmuren</label>
                                         <input 
                                             type="number" 
-                                            value={inputs.muurOppervlakte}
+                                            value={inputs.muurOppervlakte || ''}
                                             onChange={(e) => updateInput('muurOppervlakte', e.target.value)}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            min="0"
+                                            placeholder="100"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-gray-700">Ramen & Deuren</label>
                                         <input 
                                             type="number" 
-                                            value={inputs.raamOppervlakte}
+                                            value={inputs.raamOppervlakte || ''}
                                             onChange={(e) => updateInput('raamOppervlakte', e.target.value)}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            min="0"
+                                            placeholder="20"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-gray-700">Dak</label>
                                         <input 
                                             type="number" 
-                                            value={inputs.dakOppervlakte}
+                                            value={inputs.dakOppervlakte || ''}
                                             onChange={(e) => updateInput('dakOppervlakte', e.target.value)}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            min="0"
+                                            placeholder="80"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-gray-700">Vloer</label>
                                         <input 
                                             type="number" 
-                                            value={inputs.vloerOppervlakte}
+                                            value={inputs.vloerOppervlakte || ''}
                                             onChange={(e) => updateInput('vloerOppervlakte', e.target.value)}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            min="0"
+                                            placeholder="80"
                                         />
                                     </div>
                                 </div>
@@ -815,9 +971,11 @@
                                     <input 
                                         type="number" 
                                         step="0.1"
-                                        value={inputs.muurUwaarde}
+                                        value={inputs.muurUwaarde || ''}
                                         onChange={(e) => updateInput('muurUwaarde', e.target.value)}
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                        min="0"
+                                        placeholder="1.8"
                                     />
                                 </div>
 
@@ -838,9 +996,11 @@
                                     <input 
                                         type="number" 
                                         step="0.1"
-                                        value={inputs.raamUwaarde}
+                                        value={inputs.raamUwaarde || ''}
                                         onChange={(e) => updateInput('raamUwaarde', e.target.value)}
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                        min="0"
+                                        placeholder="5.0"
                                     />
                                 </div>
 
@@ -861,9 +1021,11 @@
                                     <input 
                                         type="number" 
                                         step="0.1"
-                                        value={inputs.dakUwaarde}
+                                        value={inputs.dakUwaarde || ''}
                                         onChange={(e) => updateInput('dakUwaarde', e.target.value)}
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                        min="0"
+                                        placeholder="2.5"
                                     />
                                 </div>
 
@@ -887,9 +1049,11 @@
                                     <input 
                                         type="number" 
                                         step="0.1"
-                                        value={inputs.vloerUwaarde}
+                                        value={inputs.vloerUwaarde || ''}
                                         onChange={(e) => updateInput('vloerUwaarde', e.target.value)}
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                        min="0"
+                                        placeholder="0.8"
                                     />
                                 </div>
                             </div>
@@ -906,9 +1070,10 @@
                                         <input 
                                             type="number" 
                                             step="0.001"
-                                            value={energyPrices.gas}
+                                            value={energyPrices.gas || ''}
                                             onChange={(e) => setEnergyPrices(prev => ({...prev, gas: parseFloat(e.target.value) || 0}))}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            placeholder="0.085"
                                         />
                                     </div>
                                     <div>
@@ -916,9 +1081,10 @@
                                         <input 
                                             type="number" 
                                             step="0.001"
-                                            value={energyPrices.electricity}
+                                            value={energyPrices.electricity || ''}
                                             onChange={(e) => setEnergyPrices(prev => ({...prev, electricity: parseFloat(e.target.value) || 0}))}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            placeholder="0.252"
                                         />
                                     </div>
                                     <div>
@@ -926,9 +1092,10 @@
                                         <input 
                                             type="number" 
                                             step="0.01"
-                                            value={energyPrices.fioul}
+                                            value={energyPrices.fioul || ''}
                                             onChange={(e) => setEnergyPrices(prev => ({...prev, fioul: parseFloat(e.target.value) || 0}))}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            placeholder="1.15"
                                         />
                                     </div>
                                     <div>
@@ -936,14 +1103,15 @@
                                         <input 
                                             type="number" 
                                             step="0.01"
-                                            value={energyPrices.pellets}
+                                            value={energyPrices.pellets || ''}
                                             onChange={(e) => setEnergyPrices(prev => ({...prev, pellets: parseFloat(e.target.value) || 0}))}
                                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                                            placeholder="0.35"
                                         />
                                     </div>
                                 </div>
                                 <div className="text-xs text-gray-600 mt-3 p-3 bg-gray-50 rounded">
-                                    <strong>Bron:</strong> <a href="https://www.cre.fr/Pages/Commissions-specialisees-et-groupes-de-travail/Comite-de-reglement-des-differends-et-des-sanctions/Decisions-du-Comite-de-reglement-des-differends-et-des-sanctions/(offset)/60" target="_blank" rel="noopener" className="text-blue-600 underline">{energyPrices.source}</a><br/>
+                                    <strong>Bron:</strong> <a href="https://www.cre.fr/Electricite/Marche-de-detail-de-l-electricite/Prix-de-l-electricite-pour-les-consommateurs-residentiels" target="_blank" rel="noopener" className="text-blue-600 underline">{energyPrices.source}</a><br/>
                                     <strong>Update:</strong> {energyPrices.updateFrequency}<br/>
                                     <div className="tooltip" style={{display: 'inline'}}>
                                         <span className="text-red-800 underline cursor-help">ⓘ Update info</span>
@@ -958,8 +1126,11 @@
                             </div>
                         </div>
 
-                        {/* Results Sectie */}
+                        {/* Results Sectie + Sticky Kostenoverzicht */}
                         <div className="space-y-6">
+                            {/* Sticky kostenoverzicht */}
+                            <StickyKostenoverzicht />
+
                             {/* Hoofdresultaten */}
                             <div className="bg-white p-6 rounded-lg border shadow-sm">
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-brand-red">
@@ -975,7 +1146,7 @@
                                     </div>
                                     <div className="bg-blue-50 p-4 rounded-lg">
                                         <div className="text-2xl font-bold text-blue-600">
-                                            {Math.abs(inputs.binnenTemp - inputs.buitenTemp)} K
+                                            {Math.abs(inputs.binnenTemp - getBuitenTemperatuur())} K
                                         </div>
                                         <div className="text-sm text-gray-600">Temperatuurverschil</div>
                                     </div>
@@ -992,6 +1163,19 @@
                                         <div className="text-sm text-gray-600">Verwarmingsseizoen</div>
                                     </div>
                                 </div>
+                                {inputs.zonnepanelenAantal > 0 && (
+                                    <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-medium">☀️ Zonnepanelen opbrengst:</span>
+                                            <span className="text-lg font-bold text-yellow-700">
+                                                {(results.totaalZonOpbrengst || 0).toFixed(0)} kWh/jaar
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-gray-600 mt-1">
+                                            Besparing: €{(results.zonBesparing || 0).toFixed(0)}/jaar op elektriciteitskosten
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Jaarlijkse kosten */}
@@ -999,6 +1183,17 @@
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-brand-red">
                                     <Euro />
                                     Jaarlijkse Verwarmingskosten
+                                    <div className="tooltip">
+                                        <span className="text-red-800 underline cursor-help text-sm">ⓘ Bronvermelding</span>
+                                        <span className="tooltiptext">
+                                            <strong>Energieprijzen update info:</strong><br/>
+                                            • Automatisch bijgewerkt elke week<br/>
+                                            • Gebaseerd op CRE officiële tarieven<br/>
+                                            • Gemiddelde prijzen Frankrijk<br/>
+                                            • TTC tarieven (incl. belastingen)<br/>
+                                            • Kan variëren per leverancier en regio
+                                        </span>
+                                    </div>
                                 </h2>
                                 <div className="space-y-3">
                                     <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
@@ -1011,6 +1206,7 @@
                                         <div className="text-sm text-gray-600 mt-1">
                                             {inputs.hoofdverwarmingType} 
                                             {inputs.bijverwarmingType !== 'geen' && ` + ${inputs.bijverwarmingType} bijverwarming`}
+                                            {inputs.zonnepanelenAantal > 0 && ` + ${inputs.zonnepanelenAantal} zonnepanelen`}
                                         </div>
                                     </div>
                                     
@@ -1037,22 +1233,8 @@
                                 </div>
                                 
                                 <div className="text-xs text-gray-600 mt-4 p-3 bg-gray-50 rounded">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <strong>Bronvermelding energieprijzen:</strong>
-                                        <div className="tooltip">
-                                            <span className="text-red-800 underline cursor-help">ⓘ Details</span>
-                                            <span className="tooltiptext">
-                                                <strong>Energieprijzen update info:</strong><br/>
-                                                • Automatisch bijgewerkt elke week<br/>
-                                                • Gebaseerd op CRE officiële tarieven<br/>
-                                                • Gemiddelde prijzen Frankrijk<br/>
-                                                • TTC tarieven (incl. belastingen)<br/>
-                                                • Kan variëren per leverancier en regio
-                                            </span>
-                                        </div>
-                                    </div>
                                     <div className="text-xs">
-                                        <strong>Gas:</strong> <a href="https://www.cre.fr/Pages/Commissions-specialisees-et-groupes-de-travail/Comite-de-reglement-des-differends-et-des-sanctions/Decisions-du-Comite-de-reglement-des-differends-et-des-sanctions" target="_blank" rel="noopener" className="text-blue-600 underline">CRE Tarifs réglementés gaz</a><br/>
+                                        <strong>Gas:</strong> <a href="https://www.cre.fr/Gaz/Marche-de-detail-du-gaz-naturel/Prix-du-gaz-pour-les-consommateurs-residentiels" target="_blank" rel="noopener" className="text-blue-600 underline">CRE Tarifs réglementés gaz</a><br/>
                                         <strong>Elektriciteit:</strong> <a href="https://www.cre.fr/Electricite/Marche-de-detail-de-l-electricite/Prix-de-l-electricite-pour-les-consommateurs-residentiels" target="_blank" rel="noopener" className="text-blue-600 underline">CRE Tarifs électricité</a><br/>
                                         <strong>Stookolie:</strong> <a href="https://www.fioulreduc.com/prix-du-fioul/prix-moyen-france" target="_blank" rel="noopener" className="text-blue-600 underline">Prix fioul France</a><br/>
                                         <strong>Pellets:</strong> <a href="https://www.propellet.fr/le-granule/prix-du-granule/" target="_blank" rel="noopener" className="text-blue-600 underline">Prix granulés Propellet</a>
@@ -1111,13 +1293,13 @@
                                 <h3 className="text-xl font-bold mb-2">Hulp nodig met isolatie?</h3>
                                 <p className="mb-4">Vind Nederlandse aannemers in Frankrijk of stel je vraag aan onze community.</p>
                                 <div className="flex gap-3 flex-wrap">
-                                    <a href="https://www.nedergids.nl/zoeken/isolatie/" target="_blank" rel="noopener" className="bg-white text-red-800 px-4 py-2 rounded font-medium hover:bg-gray-100 transition-colors">
+                                    <a href="https://nedergids.nl/" target="_blank" rel="noopener" className="bg-white text-red-800 px-4 py-2 rounded font-medium hover:bg-gray-100 transition-colors">
                                         Vind aannemers
                                     </a>
-                                    <a href="https://www.nederlanders.fr/forum/verbouwen/" target="_blank" rel="noopener" className="bg-red-900 text-white px-4 py-2 rounded font-medium hover:bg-red-950 transition-colors">
+                                    <a href="https://www.nederlanders.fr/profiles/blog/list?tag=Bouw" target="_blank" rel="noopener" className="bg-red-900 text-white px-4 py-2 rounded font-medium hover:bg-red-950 transition-colors">
                                         Forum discussie
                                     </a>
-                                    <a href="https://www.infofrankrijk.com/verbouwen/" target="_blank" rel="noopener" className="bg-red-900 text-white px-4 py-2 rounded font-medium hover:bg-red-950 transition-colors">
+                                    <a href="https://infofrankrijk.com/categorie/verbouwen-en-klussen-in-frankrijk/" target="_blank" rel="noopener" className="bg-red-900 text-white px-4 py-2 rounded font-medium hover:bg-red-950 transition-colors">
                                         Meer gidsen
                                     </a>
                                 </div>
@@ -1135,6 +1317,7 @@
                                     Warmteverlies (W) = Oppervlakte × U-waarde × ΔT × Klimaat × Gedrag
                                 </code>
                                 <p className="mt-2"><strong>Jaarkosten:</strong> (kW × uren/dag × verwarmingsdagen) × Energieprijs</p>
+                                <p className="mt-1"><strong>Zonnepanelen:</strong> Opbrengst × Oriëntatie × Helling × Eigenverbruik (70%)</p>
                             </div>
                             <div>
                                 <h4 className="font-semibold mb-2">📚 Bronnen U-waarden:</h4>
@@ -1146,21 +1329,21 @@
                                 </ul>
                             </div>
                             <div>
-                                <h4 className="font-semibold mb-2">🌡️ Klimaatdata:</h4>
+                                <h4 className="font-semibold mb-2">🌡️ Klimaat & Zonne-data:</h4>
                                 <ul className="text-xs space-y-1">
                                     <li>• <a href="https://www.rt-batiment.fr/batiments-neufs/reglementation-thermique-2012/textes-de-reference/arrete-du-26-octobre-2010.html" target="_blank" rel="noopener" className="text-blue-600 underline">RT 2012 klimaatzones H1a-H3</a></li>
                                     <li>• <a href="https://meteofrance.fr/climat/normales" target="_blank" rel="noopener" className="text-blue-600 underline">Météo-France temperaturen</a></li>
                                     <li>• <a href="https://www.ademe.fr/sites/default/files/assets/documents/guide-pratique-dju.pdf" target="_blank" rel="noopener" className="text-blue-600 underline">DJU (Degrés Jours Unifiés)</a></li>
-                                    <li>• <a href="https://meteofrance.fr/climat/normales/30ans" target="_blank" rel="noopener" className="text-blue-600 underline">30-jaar gemiddelden per regio</a></li>
+                                    <li>• <a href="https://re.jrc.ec.europa.eu/pvg_tools/en/tools.html" target="_blank" rel="noopener" className="text-blue-600 underline">EU Zonne-irradiatie data</a></li>
                                 </ul>
                             </div>
                             <div>
                                 <h4 className="font-semibold mb-2">💰 Energieprijzen:</h4>
                                 <ul className="text-xs space-y-1">
                                     <li>• <a href="https://www.cre.fr/" target="_blank" rel="noopener" className="text-blue-600 underline">CRE - Commission de régulation</a></li>
-                                    <li>• <a href="https://www.cre.fr/Pages/Commissions-specialisees-et-groupes-de-travail/Comite-de-reglement-des-differends-et-des-sanctions/Decisions-du-Comite-de-reglement-des-differends-et-des-sanctions" target="_blank" rel="noopener" className="text-blue-600 underline">Tarifs réglementés TTC 2024</a></li>
+                                    <li>• <a href="https://www.cre.fr/Electricite/Marche-de-detail-de-l-electricite/Prix-de-l-electricite-pour-les-consommateurs-residentiels" target="_blank" rel="noopener" className="text-blue-600 underline">Tarifs réglementés TTC 2024</a></li>
                                     <li>• Automatisch bijgewerkt via API</li>
-                                    <li>• <a href="https://www.service-public.fr/particuliers/vosdroits/F10483" target="_blank" rel="noopener" className="text-blue-600 underline">Gemiddelde prijzen Frankrijk</a></li>
+                                    <li>• <a href="https://www.cre.fr/Gaz/Marche-de-detail-du-gaz-naturel/Prix-du-gaz-pour-les-consommateurs-residentiels" target="_blank" rel="noopener" className="text-blue-600 underline">Gas tarieven Frankrijk</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -1168,7 +1351,7 @@
                             <p><strong>⚠️ Disclaimer:</strong> Deze calculator geeft een indicatieve berekening gebaseerd op erkende Franse normstellingen en standaard methoden. 
                             Voor officiële energieaudits en DPE certificering raadpleeg een gecertificeerd bureau. Energieprijzen zijn gemiddelden en kunnen variëren per leverancier, contract en regio.</p>
                             <p className="mt-2"><strong>🔬 Methodiek:</strong> Berekeningen gebaseerd op RT 2012 regelgeving, CSTB normen en ADEME richtlijnen. 
-                            Klimaatcorrecties volgens Franse DJU methodiek. Gedragsfactoren gebaseerd op studies naar werkelijk energiegebruik.</p>
+                            Klimaatcorrecties volgens Franse DJU methodiek. Gedragsfactoren gebaseerd op studies naar werkelijk energiegebruik. Zonnepaneel opbrengsten gebaseerd op EU JRC data en Franse klimaatstatistieken.</p>
                             <p className="mt-2"><strong>📝 Ontwikkeld voor:</strong> <a href="https://www.infofrankrijk.com" target="_blank" rel="noopener" className="text-blue-600 underline">InfoFrankrijk.com</a> en 
                             <a href="https://www.nederlanders.fr" target="_blank" rel="noopener" className="text-blue-600 underline"> Nederlanders.fr</a> door 
                             <strong> Communities Abroad ©</strong> | <strong> Services:</strong> <a href="https://www.nedergids.nl" target="_blank" rel="noopener" className="text-blue-600 underline">NederGids.nl</a></p>
@@ -1186,14 +1369,14 @@
     <!-- Analytics (optioneel) -->
     <script>
         // Eenvoudige usage tracking
-        console.log('Warmteverlies Calculator geladen:', new Date().toISOString());
+        console.log('Warmteverlies Calculator v2.0 geladen:', new Date().toISOString());
         console.log('Ontwikkeld door Communities Abroad voor InfoFrankrijk.com en Nederlanders.fr');
         
         // Track calculator usage
         if (typeof gtag !== 'undefined') {
-            gtag('event', 'calculator_loaded', {
+            gtag('event', 'calculator_v2_loaded', {
                 'event_category': 'tools',
-                'event_label': 'warmteverlies_calculator'
+                'event_label': 'warmteverlies_calculator_v2'
             });
         }
     </script>
