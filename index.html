@@ -144,6 +144,7 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef } = React;
         
+        // Icon Components
         const Calculator = () => <span>🧮</span>;
         const Home = () => <span>🏠</span>;
         const Thermometer = () => <span>🌡️</span>;
@@ -158,6 +159,7 @@
         const Chart = () => <span>📊</span>;
         const Download = () => <span>📄</span>;
 
+        // Main App Component
         const WarmteverliesCalculator = () => {
             const [inputs, setInputs] = useState({
                 muurOppervlakte: 100, raamOppervlakte: 20, dakOppervlakte: 80, vloerOppervlakte: 80,
@@ -257,23 +259,18 @@
                         bij: { type: inputs.bijverwarmingType, kWh: bijverwarmingKwh }
                     };
 
-                    const berekenKosten = (type, kWh) => {
+                    const berekenKosten = (type, kWh, zonKwh) => {
                         if (type === 'gas') return kWh * energyPrices.gas;
-                        if (type === 'elektriciteit') return Math.max(0, kWh - zonBesparingKwh) * energyPrices.electricity;
+                        if (type === 'elektriciteit') return Math.max(0, kWh - zonKwh) * energyPrices.electricity;
                         if (type === 'fioul') return (kWh / 10) * energyPrices.fioul;
                         if (type === 'pellets') return (kWh / 4.8) * energyPrices.pellets;
                         if (type === 'hout') return kWh * 0.05;
                         return 0;
                     };
 
-                    const hoofdverwarmingKosten = berekenKosten(kostenCalculaties.hoofd.type, kostenCalculaties.hoofd.kWh);
-                    let bijverwarmingKosten;
-                    if (kostenCalculaties.bij.type === 'elektrisch') {
-                       const resterendeZonKwh = Math.max(0, zonBesparingKwh - kostenCalculaties.hoofd.kWh);
-                       bijverwarmingKosten = Math.max(0, kostenCalculaties.bij.kWh - resterendeZonKwh) * energyPrices.electricity;
-                    } else {
-                       bijverwarmingKosten = berekenKosten(kostenCalculaties.bij.type, kostenCalculaties.bij.kWh);
-                    }
+                    const hoofdverwarmingKosten = berekenKosten(kostenCalculaties.hoofd.type, kostenCalculaties.hoofd.kWh, zonBesparingKwh);
+                    const resterendeZonKwh = Math.max(0, zonBesparingKwh - (kostenCalculaties.hoofd.type === 'elektriciteit' ? kostenCalculaties.hoofd.kWh : 0));
+                    const bijverwarmingKosten = berekenKosten(kostenCalculaties.bij.type, kostenCalculaties.bij.kWh, resterendeZonKwh);
                     
                     setResults({
                         buitenTemp, tempDiff, klimaatInfo, gebruiksFactor, gedragsFactorObject,
@@ -307,12 +304,13 @@
                     const pdf = new jsPDF('p', 'mm', 'a4');
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight - 20);
                     pdf.save('warmteverlies-rapport.pdf');
                     setIsGeneratingPdf(false);
                 });
             };
             
+            // Sub-components defined inside the main component
             const KostenOverzicht = ({ openBreakdown }) => (
                 <div className="bg-white p-4 rounded-lg border shadow-lg space-y-3">
                     <h3 className="text-lg font-bold text-brand-red flex items-center justify-between">
