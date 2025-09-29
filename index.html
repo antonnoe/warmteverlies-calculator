@@ -1,500 +1,424 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warmteverlies Calculator Frankrijk - InfoFrankrijk.com</title>
-    <meta name="description" content="Bereken het warmteverlies van je Franse woning. Inclusief klimaatzones, U-waarden en actuele energieprijzen 2024.">
-    <meta name="author" content="Communities Abroad">
-    
-    <!-- React & Dependencies -->
-    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- PDF Export Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom Styling -->
-    <style>
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f8f9fa;
-        }
-        
-        .text-brand-red { color: #800000 !important; }
-        h1, h2, h3 { color: #800000 !important; }
-        
-        .calculator-wrapper {
-            max-width: 80rem; /* 1280px */
-            margin: 0 auto;
-            padding: 1rem;
-        }
-
-        .calculator-layout {
-            display: flex;
-            flex-direction: row-reverse; /* Inputs rechts, resultaten links */
-            align-items: flex-start;
-            gap: 1.5rem;
-        }
-
-        .results-container {
-            width: 340px;
-            flex-shrink: 0;
-            position: sticky;
-            top: 1rem;
-        }
-
-        .inputs-container {
-            flex-grow: 1;
-            min-width: 0;
-        }
-        
-        .mobile-fab-stack, .modal-overlay { display: none; }
-
-        @media (max-width: 1024px) {
-            .calculator-layout {
-                flex-direction: column;
-            }
-            .results-container {
-                display: none;
-            }
-            .mobile-fab-stack {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-                position: fixed;
-                bottom: 1.5rem;
-                right: 1.5rem;
-                z-index: 1000;
-                align-items: flex-end;
-            }
-            .fab-button {
-                background-color: #800000;
-                color: white;
-                border-radius: 9999px;
-                height: 3.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                cursor: pointer;
-                transition: all 0.2s ease;
-                width: 3.5rem; /* Standaard breedte voor icoon-knoppen */
-            }
-            .fab-button-costs {
-                width: auto; /* Automatische breedte voor de kostenknop */
-                padding: 0 1.25rem; /* Horizontale padding */
-            }
-            .fab-button:hover { transform: scale(1.05); }
-        }
-        
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2000;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        .modal-content {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .loading { display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #800000; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        input[type="number"] { -moz-appearance: textfield; }
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Energie Prestatie Calculator – InfoFrankrijk</title>
+  <meta name="description" content="Een complete energiecalculator met warmteverlies (U·A + ventilatie), HDD, kosten, hoofd- en bijverwarming, PV, zwembad en gedetailleerde toelichting."/>
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body { margin: 0; background: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, Arial, sans-serif; }
+    .text-brand { color: #800000; }
+    .sticky-sidebar { position: sticky; top: 1rem; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+    .no-spin::-webkit-outer-spin-button, .no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .no-spin { -moz-appearance: textfield; }
+    .tooltip-container { position: relative; display: inline-flex; align-items: center; }
+    .tooltip-icon { cursor: pointer; }
+    .tooltip-box { visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s; }
+    .tooltip-container:hover .tooltip-box { visibility: visible; opacity: 1; }
+  </style>
 </head>
 <body>
-    <div id="loading" class="loading">
-        <div class="spinner"></div>
-        <p style="margin-top: 20px; color: #666;">Calculator wordt geladen...</p>
+<div id="root"></div>
+<script>
+  // Fallback data in case an external API is not available
+  const ENERGY_API = { getFallbackPrices() { return { electricity: 0.25, gas: 0.085, fioul_per_l: 1.15, pellets_per_kg: 0.35, wood_per_kwh: 0.05, petroleum_per_l: 1.80, source: "Invulbaar · indicatief" }; } };
+  window.ENERGY_API = ENERGY_API;
+</script>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+// --- Helper Components & Data ---
+const Icon = { calc: () => <>🧮</>, home: () => <>🏠</>, euro: () => <>💰</>, info: () => <>ℹ️</>, chart: () => <>📊</>, file: () => <>📄</>, close: () => <>✕</> };
+
+const Tooltip = ({ text }) => (
+  <div className="tooltip-container ml-2">
+    <span className="tooltip-icon text-brand font-bold">?</span>
+    <div className="tooltip-box absolute bottom-full mb-2 w-64 bg-gray-800 text-white text-xs rounded py-1 px-2 z-10">
+      {text}
     </div>
-    
-    <div id="root"></div>
-    
-    <script>
-        const ENERGY_API = {
-            getFallbackPrices() {
-                return { gas: 0.0847, electricity: 0.2516, fioul: 1.15, pellets: 0.35, source: 'CRE - Commission de régulation de l\'énergie' };
-            }
-        };
-        window.ENERGY_API = ENERGY_API;
-    </script>
+  </div>
+);
 
-    <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
-        
-        // Icon Components
-        const Calculator = () => <span>🧮</span>;
-        const Home = () => <span>🏠</span>;
-        const Thermometer = () => <span>🌡️</span>;
-        const Euro = () => <span>💰</span>;
-        const TrendingDown = () => <span>📉</span>;
-        const MapPin = () => <span>📍</span>;
-        const Sun = () => <span>☀️</span>;
-        const Beach = () => <span>🏖️</span>;
-        const Fire = () => <span>🔥</span>;
-        const Info = () => <span>ℹ️</span>;
-        const Edit = () => <span>✏️</span>;
-        const Chart = () => <span>📊</span>;
-        const Download = () => <span>📄</span>;
+const klimaatzones = {
+  H1a: { naam: 'H1a - Noordoost (Reims, Metz)', factor: 1.2, gemTemp: -5, hdd: 2800, zon: 1050 },
+  H1b: { naam: 'H1b - Noord/Centrum (Parijs, Lille)', factor: 1.1, gemTemp: -3, hdd: 2600, zon: 1100 },
+  H1c: { naam: 'H1c - West (Brest, Caen)', factor: 1.0, gemTemp: 2, hdd: 2300, zon: 1000 },
+  H2a: { naam: 'H2a - Midden-west (Poitiers, Tours)', factor: 0.9, gemTemp: 0, hdd: 2400, zon: 1250 },
+  H2b: { naam: 'H2b - Midden-oost (Lyon, Dijon)', factor: 0.95, gemTemp: -2, hdd: 2500, zon: 1200 },
+  H2c: { naam: 'H2c - Zuidwest (Bordeaux, Toulouse)', factor: 0.8, gemTemp: 3, hdd: 2100, zon: 1350 },
+  H2d: { naam: 'H2d - Zuidoost (Avignon, Montpellier)', factor: 0.7, gemTemp: 4, hdd: 2000, zon: 1450 },
+  H3:  { naam: 'H3 - Mediterraan (Nice, Marseille)', factor: 0.6, gemTemp: 6, hdd: 1600, zon: 1500 }
+};
 
-        // Main App Component
-        const WarmteverliesCalculator = () => {
-            const [inputs, setInputs] = useState({
-                muurOppervlakte: 100, raamOppervlakte: 20, dakOppervlakte: 80, vloerOppervlakte: 80,
-                muurUwaarde: 1.8, raamUwaarde: 5.0, dakUwaarde: 2.5, vloerUwaarde: 0.8,
-                binnenTemp: 20, klimaatzone: 'H2a', woningGebruik: 'volledig',
-                verwarmdeRuimtes: 'heel_huis', ventilatieGedrag: 'normaal',
-                hoofdverwarmingType: 'gas', bijverwarmingType: 'geen',
-                bijverwarmingIntensiteit: 'incidenteel', zonnepanelenAantal: 0,
-                zonnepanelenOrientatie: 'zuid', zonnepanelenHelling: 'optimaal'
-            });
+const uWAARDE_PRESETS = {
+  muur:  { 'Ongeïsoleerd (voor 1975)': 2.0, 'Licht geïsoleerd (~5 cm)': 0.8, 'Goed (~10 cm)': 0.4, 'Zeer goed (≥ 15 cm)': 0.25 },
+  raam:  { 'Enkel glas': 5.5, 'Oud dubbelglas': 3.0, 'Modern HR(+)': 1.8, 'Triple HR++': 1.0 },
+  dak:   { 'Ongeïsoleerd': 3.0, 'Matig (~10 cm)': 0.5, 'Goed (~20 cm)': 0.25, 'Zeer goed (≥ 30 cm)': 0.15 },
+  vloer: { 'Ongeïsoleerd': 2.2, 'Matig': 1.2, 'Redelijk': 0.8, 'Goed': 0.3 }
+};
 
-            const [results, setResults] = useState({});
-            const [energyPrices, setEnergyPrices] = useState(ENERGY_API.getFallbackPrices());
-            const [isCalculating, setIsCalculating] = useState(true);
-            const [activeTab, setActiveTab] = useState('invoer');
-            const [isCostsModalOpen, setIsCostsModalOpen] = useState(false);
-            const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false);
-            const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-            const breakdownRef = useRef(null);
+const gebruikOpties = {
+  volledig: { naam: 'Volledig jaar', factor: 1.0 },
+  secondaire_zomer: { naam: 'Vakantiewoning (zomer)', factor: 0.3 },
+  secondaire_winter: { naam: 'Vakantiewoning (winter)', factor: 0.4 },
+  weekend: { naam: 'Alleen weekends', factor: 0.25 }
+};
 
-            const klimaatzones = {
-                'H1a': { naam: 'H1a - Noordoost (Reims, Metz)', factor: 1.2, gemTemp: -5, verwarmingsDagen: 200, zonOpbrengst: 1050 },
-                'H1b': { naam: 'H1b - Noord/Centrum (Parijs, Lille)', factor: 1.1, gemTemp: -3, verwarmingsDagen: 185, zonOpbrengst: 1100 },
-                'H1c': { naam: 'H1c - West (Brest, Caen)', factor: 1.0, gemTemp: 2, verwarmingsDagen: 175, zonOpbrengst: 1000 },
-                'H2a': { naam: 'H2a - Midden-west (Poitiers, Tours)', factor: 0.9, gemTemp: 0, verwarmingsDagen: 170, zonOpbrengst: 1250 },
-                'H2b': { naam: 'H2b - Midden-oost (Lyon, Dijon)', factor: 0.95, gemTemp: -2, verwarmingsDagen: 180, zonOpbrengst: 1200 },
-                'H2c': { naam: 'H2c - Zuidwest (Bordeaux, Toulouse)', factor: 0.8, gemTemp: 3, verwarmingsDagen: 155, zonOpbrengst: 1350 },
-                'H2d': { naam: 'H2d - Zuidoost (Avignon, Montpellier)', factor: 0.7, gemTemp: 4, verwarmingsDagen: 145, zonOpbrengst: 1450 },
-                'H3': { naam: 'H3 - Mediterraan (Nice, Marseille)', factor: 0.6, gemTemp: 6, verwarmingsDagen: 120, zonOpbrengst: 1500 }
-            };
+function f0(x) { return (x || 0).toFixed(0); }
+function f1(x) { return (x || 0).toFixed(1); }
 
-            const uWaardePresets = {
-                muur: {'Ongeïsoleerd (voor 1975)': 2.0, 'Licht geïsoleerd (~5cm)': 0.8, 'Goed geïsoleerd (~10cm)': 0.4, 'Zeer goed (15cm+)': 0.25},
-                raam: {'Enkel glas': 5.5, 'Standaard dubbel glas': 3.0, 'Dubbel glas (HR)': 1.8, 'Triple glas (HR++)': 1.0},
-                dak: {'Ongeïsoleerd': 3.0, 'Licht geïsoleerd (~10cm)': 0.5, 'Goed geïsoleerd (~20cm)': 0.25, 'Zeer goed (30cm+)': 0.15},
-                vloer: {'Ongeïsoleerd (op zand)': 2.2, 'Houten vloer (kruipruimte)': 1.2, 'Matig geïsoleerd': 0.8, 'Goed geïsoleerd (modern)': 0.3}
-            };
-            
-            const woningGebruikOpties = {'volledig': { naam: 'Volledig jaar', factor: 1.0 },'secondaire_zomer': { naam: 'Zomer + tussenseizoen', factor: 0.3 },'secondaire_winter': { naam: 'Winter weekends', factor: 0.4 },'weekend': { naam: 'Alleen weekends', factor: 0.25 }};
-            const zonOrientatieFactoren = {'zuid': 1.0,'zuidwest': 0.95,'zuidoost': 0.95,'oost': 0.85,'west': 0.85};
-            const zonHellingFactoren = {'vlak': 0.85,'optimaal': 1.0,'steil': 0.9};
+// --- Main App Component ---
+function App() {
+  const [inputs, setInputs] = useState({
+    // Isolatie & transmissie
+    muurA: 100, raamA: 20, dakA: 80, vloerA: 80,
+    muurU: 1.8, raamU: 5.0, dakU: 2.5, vloerU: 0.8,
+    // Klimaat & gebruik
+    t_in: 20, zone: 'H2a', gebruik: 'volledig', verwarmdeRuimtes: 'heel', ventilatieGedrag: 'normaal',
+    // Ventilatie
+    volume: 250, n_ach: 0.5,
+    // HDD (override) & PV
+    hddCustom: '', pvN: 0, pvOri: 'zuid', pvTilt: 'optimaal',
+    // Verwarming – hoofd & bij
+    hoofd: 'gas', etaMain: 90, mainSCOP: 3.2,
+    bij: 'geen', bijIntensity: 'incidenteel', bijSCOP: 3.0,
+    // Prijzen
+    elPrice: ENERGY_API.getFallbackPrices().electricity, gasPrice: ENERGY_API.getFallbackPrices().gas,
+    fioulPrice: ENERGY_API.getFallbackPrices().fioul_per_l, pelletPrice: ENERGY_API.getFallbackPrices().pellets_per_kg,
+    woodPrice: ENERGY_API.getFallbackPrices().wood_per_kwh, petroleumPrice: ENERGY_API.getFallbackPrices().petroleum_per_l,
+    // Zwembad
+    poolEnabled: false, poolA: 24, poolSeasonDays: 150, poolPumpW: 550, poolPumpH: 8,
+    poolCover: 'solar', poolWind: 'normaal', poolHeat: 'geen', poolTargetT: 28, poolAirT: 22, poolSCOP: 4
+  });
 
-            useEffect(() => {
-                const timer = setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
-                return () => clearTimeout(timer);
-            }, []);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const breakdownRef = useRef(null);
 
-            const updateInput = (field, value) => setInputs(prev => ({ ...prev, [field]: value }));
-            const setPreset = (type, preset) => updateInput(`${type}Uwaarde`, uWaardePresets[type][preset]);
+  const zone = klimaatzones[inputs.zone];
+  const hdd = inputs.hddCustom !== '' ? Math.max(0, parseFloat(inputs.hddCustom) || 0) : zone.hdd;
+  const t_out = zone.gemTemp;
+  const dT = inputs.t_in - t_out;
 
-            useEffect(() => {
-                setIsCalculating(true);
-                const handler = setTimeout(() => {
-                    const safe = (val, def = 0) => parseFloat(val) || def;
-                    const getBuitenTemp = () => klimaatzones[inputs.klimaatzone]?.gemTemp || 0;
-                    
-                    const safeInputs = {
-                        muurOppervlakte: safe(inputs.muurOppervlakte), raamOppervlakte: safe(inputs.raamOppervlakte),
-                        dakOppervlakte: safe(inputs.dakOppervlakte), vloerOppervlakte: safe(inputs.vloerOppervlakte),
-                        muurUwaarde: safe(inputs.muurUwaarde), raamUwaarde: safe(inputs.raamUwaarde),
-                        dakUwaarde: safe(inputs.dakUwaarde), vloerUwaarde: safe(inputs.vloerUwaarde),
-                        binnenTemp: safe(inputs.binnenTemp, 20), zonnepanelenAantal: parseInt(inputs.zonnepanelenAantal, 10) || 0
-                    };
+  const results = useMemo(() => {
+    const A = (a) => Math.max(0, parseFloat(a) || 0); const U = (u) => Math.max(0, parseFloat(u) || 0);
+    // Transmissie & ventilatie
+    const Htr = U(inputs.muurU) * A(inputs.muurA) + U(inputs.raamU) * A(inputs.raamA) + U(inputs.dakU) * A(inputs.dakA) + U(inputs.vloerU) * A(inputs.vloerA);
+    const Hvent = 0.34 * Math.max(0, parseFloat(inputs.n_ach) || 0) * Math.max(0, parseFloat(inputs.volume) || 0);
+    const Htot = Htr + Hvent;
+    const P = Htot * dT;
 
-                    const klimaatInfo = klimaatzones[inputs.klimaatzone];
-                    const buitenTemp = getBuitenTemp();
-                    const tempDiff = Math.abs(safeInputs.binnenTemp - buitenTemp);
-                    
-                    const muurVerlies = safeInputs.muurOppervlakte * safeInputs.muurUwaarde * tempDiff;
-                    const raamVerlies = safeInputs.raamOppervlakte * safeInputs.raamUwaarde * tempDiff;
-                    const dakVerlies = safeInputs.dakOppervlakte * safeInputs.dakUwaarde * tempDiff;
-                    const vloerVerlies = safeInputs.vloerOppervlakte * safeInputs.vloerUwaarde * tempDiff;
-                    const bruttoVerlies = muurVerlies + raamVerlies + dakVerlies + vloerVerlies;
-                    
-                    const gedragsFactorObject = {
-                        verwarmdeRuimtes: inputs.verwarmdeRuimtes === 'leefruimtes' ? 0.7 : (inputs.verwarmdeRuimtes === 'minimaal' ? 0.5 : 1.0),
-                        ventilatieGedrag: inputs.ventilatieGedrag === 'veel_ventileren' ? 1.2 : (inputs.ventilatieGedrag === 'ramen_open' ? 1.5 : 1.0)
-                    };
-                    const gedragsFactor = gedragsFactorObject.verwarmdeRuimtes * gedragsFactorObject.ventilatieGedrag;
+    // Gedrag & gebruik
+    const gf_room = inputs.verwarmdeRuimtes === 'leef' ? 0.7 : inputs.verwarmdeRuimtes === 'min' ? 0.5 : 1.0;
+    const gf_vent = inputs.ventilatieGedrag === 'veel' ? 1.2 : inputs.ventilatieGedrag === 'open' ? 1.5 : 1.0;
+    const useFactor = (gebruikOpties[inputs.gebruik]?.factor) || 1.0;
+    const gf = gf_room * gf_vent;
 
-                    const totaalVerlies = bruttoVerlies * klimaatInfo.factor * gedragsFactor;
-                    const gebruiksFactor = woningGebruikOpties[inputs.woningGebruik]?.factor || 1.0;
-                    const verwarmingsDagen = klimaatInfo.verwarmingsDagen * gebruiksFactor;
-                    const jaarlijkseKwh = (totaalVerlies / 1000) * 12 * verwarmingsDagen;
-                    
-                    const hoofdverwarmingPercentages = { 'incidenteel': 0.9, 'regelmatig': 0.7, 'hoofdverwarming': 0.2 };
-                    const hoofdverwarmingPercentage = inputs.bijverwarmingType !== 'geen' ? hoofdverwarmingPercentages[inputs.bijverwarmingIntensiteit] : 1.0;
-                    
-                    const hoofdverwarmingKwh = jaarlijkseKwh * hoofdverwarmingPercentage;
-                    const bijverwarmingKwh = jaarlijkseKwh * (1 - hoofdverwarmingPercentage);
-                    
-                    const totaalZonOpbrengst = safeInputs.zonnepanelenAantal * klimaatInfo.zonOpbrengst * zonOrientatieFactoren[inputs.zonnepanelenOrientatie] * zonHellingFactoren[inputs.zonnepanelenHelling];
-                    const zonBesparingKwh = totaalZonOpbrengst * 0.7;
-                    
-                    const kostenCalculaties = {
-                        hoofd: { type: inputs.hoofdverwarmingType, kWh: hoofdverwarmingKwh },
-                        bij: { type: inputs.bijverwarmingType, kWh: bijverwarmingKwh }
-                    };
+    // Jaar-warmtevraag
+    const E_kWh = Htot * hdd * 24 / 1000 * zone.factor * gf * useFactor;
 
-                    const berekenKosten = (type, kWh, zonKwh) => {
-                        if (type === 'gas') return kWh * energyPrices.gas;
-                        if (type === 'elektriciteit') return Math.max(0, kWh - zonKwh) * energyPrices.electricity;
-                        if (type === 'fioul') return (kWh / 10) * energyPrices.fioul;
-                        if (type === 'pellets') return (kWh / 4.8) * energyPrices.pellets;
-                        if (type === 'hout') return kWh * 0.05;
-                        return 0;
-                    };
+    // Verdeling per element
+    const dMuur = U(inputs.muurU) * A(inputs.muurA) * Htot * 24 * hdd / 1000; const dRaam = U(inputs.raamU) * A(inputs.raamA) * Htot * 24 * hdd / 1000;
+    const dDak = U(inputs.dakU) * A(inputs.dakA) * Htot * 24 * hdd / 1000; const dVloer = U(inputs.vloerU) * A(inputs.vloerA) * Htot * 24 * hdd / 1000;
+    const dVent = Hvent * Htot * 24 * hdd / 1000;
+    const pct = (x) => E_kWh > 0 ? (x / (dMuur+dRaam+dDak+dVloer+dVent) * 100) : 0;
 
-                    const hoofdverwarmingKosten = berekenKosten(kostenCalculaties.hoofd.type, kostenCalculaties.hoofd.kWh, zonBesparingKwh);
-                    const resterendeZonKwh = Math.max(0, zonBesparingKwh - (kostenCalculaties.hoofd.type === 'elektriciteit' ? kostenCalculaties.hoofd.kWh : 0));
-                    const bijverwarmingKosten = berekenKosten(kostenCalculaties.bij.type, kostenCalculaties.bij.kWh, resterendeZonKwh);
-                    
-                    setResults({
-                        buitenTemp, tempDiff, klimaatInfo, gebruiksFactor, gedragsFactorObject,
-                        hoofdverwarmingKwh, bijverwarmingKwh, hoofdverwarmingKosten, bijverwarmingKosten,
-                        zonBesparingKwh,
-                        muurVerlies, raamVerlies, dakVerlies, vloerVerlies, bruttoVerlies,
-                        totaalVerlies, jaarlijkseKwh,
-                        totaleJaarKosten: hoofdverwarmingKosten + bijverwarmingKosten,
-                        zonBesparing: zonBesparingKwh * energyPrices.electricity,
-                        percentages: {
-                            muur: bruttoVerlies > 0 ? (muurVerlies / bruttoVerlies) * 100 : 0,
-                            raam: bruttoVerlies > 0 ? (raamVerlies / bruttoVerlies) * 100 : 0,
-                            dak: bruttoVerlies > 0 ? (dakVerlies / bruttoVerlies) * 100 : 0,
-                            vloer: bruttoVerlies > 0 ? (vloerVerlies / bruttoVerlies) * 100 : 0
-                        }
-                    });
-                    setIsCalculating(false);
-                }, 400);
+    // PV (indicatief)
+    const oriFac = { zuid: 1.0, zuidwest: 0.95, zuidoost: 0.95, oost: 0.85, west: 0.85 };
+    const tiltFac = { vlak: 0.85, optimaal: 1.0, steil: 0.9 };
+    const pvYield = inputs.pvN * zone.zon * (oriFac[inputs.pvOri] || 1) * (tiltFac[inputs.pvTilt] || 1);
+    let pvSelf = pvYield * 0.7;
 
-                return () => clearTimeout(handler);
-            }, [inputs, energyPrices]);
-            
-            const handleGeneratePdf = () => {
-                const { jsPDF } = window.jspdf;
-                const input = breakdownRef.current;
-                if (!input) return;
+    // Splitsing hoofd/bij op warmtevraag
+    const bijMap = { incidenteel: 0.9, regelmatig: 0.7, hoofdverwarming: 0.2 };
+    const hoofdFrac = inputs.bij === 'geen' ? 1.0 : (bijMap[inputs.bijIntensity] || 0.9);
+    const kWhHoofd = E_kWh * hoofdFrac; const kWhBij = E_kWh - kWhHoofd;
 
-                setIsGeneratingPdf(true);
-                html2canvas(input, { scale: 2 }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight - 20);
-                    pdf.save('warmteverlies-rapport.pdf');
-                    setIsGeneratingPdf(false);
-                });
-            };
-            
-            // Sub-components defined inside the main component
-            const KostenOverzicht = ({ openBreakdown }) => (
-                <div className="bg-white p-4 rounded-lg border shadow-lg space-y-3">
-                    <h3 className="text-lg font-bold text-brand-red flex items-center justify-between">
-                        <span><Euro /> Jaarlijkse Kosten</span>
-                        <button onClick={openBreakdown} className="text-gray-400 hover:text-brand-red" title="Toon berekeningsoverzicht">
-                            <Info />
-                        </button>
-                    </h3>
-                    <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200 text-center">
-                        <div className="flex justify-center items-center">
-                            <span className="text-3xl md:text-4xl text-indigo-400 mr-2">€</span>
-                            <span className="text-4xl md:text-5xl font-bold text-indigo-900 tracking-tight">
-                                {isCalculating ? '...' : (results.totaleJaarKosten || 0).toFixed(0)}
-                            </span>
-                        </div>
-                        <div className="text-xs text-gray-600 mt-1 truncate">
-                            {inputs.hoofdverwarmingType}{inputs.bijverwarmingType !== 'geen' && ` + ${inputs.bijverwarmingType}`}
-                        </div>
-                    </div>
-                    {inputs.zonnepanelenAantal > 0 && (
-                        <div className="p-2 bg-yellow-100 rounded text-center text-sm">
-                            <strong>Zonbesparing:</strong> <span className="font-bold text-green-700">€{(results.zonBesparing || 0).toFixed(0)}</span>/jaar
-                        </div>
-                    )}
-                    <div className="p-2 bg-gray-50 rounded text-xs text-gray-700 space-y-1">
-                        <div><strong>Totaal verlies:</strong> {(results.totaalVerlies / 1000 || 0).toFixed(1)} kW</div>
-                        <div><strong>Jaarverbruik:</strong> {(results.jaarlijkseKwh || 0).toFixed(0)} kWh</div>
-                    </div>
+    const p = { el: Math.max(0, +inputs.elPrice || 0), gas: Math.max(0, +inputs.gasPrice || 0), fioul: Math.max(0, +inputs.fioulPrice || 0), pellet: Math.max(0, +inputs.pelletPrice || 0), wood: Math.max(0, +inputs.woodPrice || 0), pet: Math.max(0, +inputs.petroleumPrice || 0) };
+
+    const toCostMain = () => {
+      const eta = Math.max(1, +inputs.etaMain || 90) / 100;
+      if (inputs.hoofd === 'gas') return { el: 0, other: (kWhHoofd / eta) * p.gas };
+      if (inputs.hoofd === 'fioul') return { el: 0, other: ((kWhHoofd / eta) / 10) * p.fioul };
+      if (inputs.hoofd === 'elektrisch') { let elUsed = kWhHoofd; const elPay = Math.max(0, elUsed - pvSelf); pvSelf -= elUsed - elPay; return { el: elPay * p.el, other: 0 }; }
+      if (inputs.hoofd === 'warmtepomp') { const scop = Math.max(1, +inputs.mainSCOP || 3.2); let elUsed = kWhHoofd / scop; const elPay = Math.max(0, elUsed - pvSelf); pvSelf -= elUsed - elPay; return { el: elPay * p.el, other: 0 }; }
+      if (inputs.hoofd === 'hout') return { el: 0, other: (kWhHoofd / eta) * p.wood };
+      if (inputs.hoofd === 'pellets') return { el: 0, other: ((kWhHoofd / eta) / 4.8) * p.pellet };
+      return { el: 0, other: 0 };
+    };
+
+    const toCostBij = () => {
+      if (kWhBij <= 0) return { el: 0, other: 0 };
+      switch (inputs.bij) {
+        case 'elektrisch': { let elUsed = kWhBij; const elPay = Math.max(0, elUsed - pvSelf); pvSelf -= elUsed - elPay; return { el: elPay * p.el, other: 0 }; }
+        case 'inverter_ac': { const scop = Math.max(1, +inputs.bijSCOP || 3); let elUsed = kWhBij / scop; const elPay = Math.max(0, elUsed - pvSelf); pvSelf -= elUsed - elPay; return { el: elPay * p.el, other: 0 }; }
+        case 'houtkachel': return { el: 0, other: (kWhBij / 0.75) * p.wood };
+        case 'open_haard': return { el: 0, other: (kWhBij / 0.15) * p.wood };
+        case 'pellets': return { el: 0, other: ((kWhBij / 0.88) / 4.8) * p.pellet };
+        case 'petroleum': return { el: 0, other: ((kWhBij / 0.95) / 10) * p.pet };
+        default: return { el: 0, other: 0 };
+      }
+    };
+
+    const mainC = toCostMain();
+    const bijC = toCostBij();
+
+    // Zwembad
+    let euro_pool_heat = 0, euro_pool_pump = 0;
+    if (inputs.poolEnabled) {
+      const days = Math.max(0, +inputs.poolSeasonDays || 0);
+      const pool_pump_kWh = (Math.max(0, +inputs.poolPumpW || 0) / 1000) * Math.max(0, +inputs.poolPumpH || 0) * days;
+      const Awater = Math.max(0, +inputs.poolA || 0);
+      const dTpool = Math.max(0, (+inputs.poolTargetT || 28) - (+inputs.poolAirT || 22));
+      let Ueff = 18; // W/m²K indicatief
+      const coverRed = { geen: 1.0, solar: 0.5, lamellen: 0.35 }[inputs.poolCover] || 1.0;
+      const windFac = { beschut: 0.9, normaal: 1.0, winderig: 1.3 }[inputs.poolWind] || 1.0;
+      Ueff = Ueff * coverRed * windFac;
+      const Q = Ueff * Awater * dTpool * (days * 24) / 1000;
+      if (inputs.poolHeat === 'wp') { const scop = Math.max(1, +inputs.poolSCOP || 4); let elUsed = Q / scop; const elPay = Math.max(0, elUsed - pvSelf); pvSelf -= elUsed - elPay; euro_pool_heat = elPay * p.el; }
+      else if (inputs.poolHeat === 'elektra') { let elUsed = Q; const elPay = Math.max(0, elUsed - pvSelf); pvSelf -= elUsed - elPay; euro_pool_heat = elPay * p.el; }
+      else if (inputs.poolHeat === 'gas') { euro_pool_heat = Q * p.gas; }
+      let pumpElUsed = pool_pump_kWh; const pumpElPay = Math.max(0, pumpElUsed - pvSelf); pvSelf -= pumpElUsed - pumpElPay; euro_pool_pump = pumpElPay * p.el;
+    }
+
+    const totalEuro = mainC.el + mainC.other + bijC.el + bijC.other + euro_pool_heat + euro_pool_pump;
+
+    return {
+      Htr, Hvent, Htot, P, E_kWh,
+      verdeling: { pct: { muur: pct(dMuur), raam: pct(dRaam), dak: pct(dDak), vloer: pct(dVloer), ventilatie: pct(dVent) } },
+      costs: { heat_main: mainC.el + mainC.other, heat_bij: bijC.el + bijC.other, poolHeat: euro_pool_heat, poolPump: euro_pool_pump, total: totalEuro },
+      pv: { yield: pvYield, selfUsedAfter: pvSelf }, dT, t_out
+    };
+  }, [inputs, zone, dT, hdd]);
+
+  const update = (k, v) => setInputs(s => ({ ...s, [k]: v }));
+  const setPreset = (type, key) => update(type + "U", uWAARDE_PRESETS[type][key]);
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf; if (!breakdownRef.current) return;
+    html2canvas(breakdownRef.current, { scale: 2 }).then(cv => { const pdf = new jsPDF('p', 'mm', 'a4'); const w = pdf.internal.pageSize.getWidth(); const h = cv.height * w / cv.width; pdf.addImage(cv.toDataURL('image/png'), 'PNG', 10, 10, w - 20, h - 20); pdf.save('energie-rapport.pdf'); });
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-4">
+      <div className="bg-white p-5 rounded-lg shadow-sm text-center mb-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-brand flex items-center justify-center gap-2"><Icon.calc /> Energie Prestatie Calculator</h1>
+        <p className="text-sm text-gray-600">Een complete module voor warmteverlies, jaarverbruik, kosten en renovatie-inzicht.</p>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* --- Left Column: Results --- */}
+        <div className="lg:w-80 flex-shrink-0">
+          <div className="sticky-sidebar">
+            <div className="bg-white rounded-lg border shadow-sm p-4">
+              <h3 className="font-bold text-brand mb-2"><Icon.euro /> Jaarlijkse energiekosten</h3>
+              <div className="text-4xl font-extrabold tracking-tight text-gray-900">€{f0(results.costs.total)}</div>
+              <div className="text-xs text-gray-600 mt-1">Ruimteverwarming, zwembad & PV-verrekening</div>
+              <div className="grid grid-cols-2 gap-2 text-xs mt-3">
+                <div className="bg-gray-50 rounded p-2"><div className="text-gray-500">Totaal H (W/K)</div><div className="font-semibold">{f1(results.Htot)}</div></div>
+                <div className="bg-gray-50 rounded p-2"><div className="text-gray-500">ΔT (K)</div><div className="font-semibold">{f1(results.dT)}</div></div>
+                <div className="bg-gray-50 rounded p-2"><div className="text-gray-500">P ontwerp (W)</div><div className="font-semibold">{f0(results.P)}</div></div>
+                <div className="bg-gray-50 rounded p-2"><div className="text-gray-500">Warmtevraag (kWh/j)</div><div className="font-semibold">{f0(results.E_kWh)}</div></div>
+              </div>
+              <button className="mt-3 w-full bg-brand text-white py-2 rounded hover:opacity-90" onClick={() => setShowBreakdown(true)}>Gedetailleerd overzicht</button>
+            </div>
+            <div className="bg-white rounded-lg border shadow-sm p-4 mt-4">
+              <h3 className="font-bold text-brand mb-2"><Icon.chart /> Verdeling warmteverlies</h3>
+              {results.E_kWh > 0 ? (
+                <div className="flex items-end gap-2 h-44">
+                  {['muur', 'raam', 'dak', 'vloer', 'ventilatie'].map(k => {
+                    const v = results.verdeling.pct[k] || 0;
+                    return (
+                      <div key={k} className="flex-1 flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-1">{f0(v)}%</div>
+                        <div className="w-full bg-brand rounded-t flex items-center justify-center text-white text-[10px]" style={{ height: `${Math.max(15, v * 1.5)}px` }}>{k}</div>
+                      </div>
+                    )
+                  })}
                 </div>
-            );
+              ) : <div className="text-sm text-gray-500">Voer gegevens in om de verdeling te zien.</div>}
+            </div>
+          </div>
+        </div>
 
-            const HeatLossChart = ({ results }) => {
-                if (!results.bruttoVerlies) return <div className="bg-white p-6 rounded-lg border shadow-sm text-center text-gray-500">Voer data in voor de analyse.</div>;
-                const data = [
-                    { naam: 'Muren', verlies: results.muurVerlies, percentage: results.percentages.muur, kleur: '#ff6b35' },
-                    { naam: 'Ramen', verlies: results.raamVerlies, percentage: results.percentages.raam, kleur: '#4ecdc4' },
-                    { naam: 'Dak', verlies: results.dakVerlies, percentage: results.percentages.dak, kleur: '#45b7d1' },
-                    { naam: 'Vloer', verlies: results.vloerVerlies, percentage: results.percentages.vloer, kleur: '#96ceb4' }
-                ].sort((a, b) => b.verlies - a.verlies);
-                const maxVerlies = Math.max(...data.map(d => d.verlies), 1);
-                return (
-                    <div className="bg-white p-6 rounded-lg border shadow-sm"><h3 className="text-xl font-bold mb-4 flex items-center gap-2"><TrendingDown /> Warmteverlies Verdeling</h3><div className="flex items-end justify-center gap-4" style={{ height: 220 }}>{data.map(item => (<div key={item.naam} className="flex flex-col items-center flex-grow w-1/4"><div className="text-sm font-semibold mb-2 text-gray-700">{item.percentage.toFixed(0)}%</div><div className="w-full rounded-t transition-all duration-500 flex items-center justify-center text-white text-xs font-bold p-1" style={{ height: `${Math.max((item.verlies / maxVerlies) * 180, 20)}px`, backgroundColor: item.kleur, minHeight: '20px' }}><span className="truncate">{item.verlies.toFixed(0)}W</span></div><div className="text-sm mt-2 text-center font-medium">{item.naam}</div></div>))}</div></div>
-                );
-            };
-            
-            const HouseVisualization = ({ results }) => {
-                 if (!results.bruttoVerlies) return null;
-                 const getColor = p => { if (p > 40) return '#ef4444'; if (p > 25) return '#f97316'; if (p > 15) return '#f59e0b'; return '#22c55e'; };
-                 return (
-                     <div className="bg-white p-6 rounded-lg border shadow-sm"><h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Home/> Visueel Overzicht</h3><div className="flex justify-center"><svg width="300" height="250" viewBox="0 0 300 250" className="max-w-full"><polygon points="50,100 150,50 250,100" fill={getColor(results.percentages?.dak || 0)} stroke="#333" strokeWidth="2" /><text x="150" y="85" textAnchor="middle" className="text-sm font-bold fill-white">Dak</text><rect x="50" y="100" width="200" height="100" fill={getColor(results.percentages?.muur || 0)} stroke="#333" strokeWidth="2" /><text x="150" y="155" textAnchor="middle" className="text-sm font-bold fill-white">Muren</text><rect x="80" y="120" width="50" height="50" fill={getColor(results.percentages?.raam || 0)} stroke="#333" strokeWidth="2" /><rect x="170" y="120" width="50" height="50" fill={getColor(results.percentages?.raam || 0)} stroke="#333" strokeWidth="2" /><path d="M50 200 L250 200 L270 220 L30 220 Z" fill={getColor(results.percentages?.vloer || 0)} stroke="#333" strokeWidth="2" /><text x="150" y="240" textAnchor="middle" className="text-xs font-bold">Vloer & Ramen</text></svg></div></div>
-                 );
-            };
+        {/* --- Right Column: Inputs --- */}
+        <div className="flex-1 space-y-4">
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            <h2 className="font-bold text-brand mb-3">1. Locatie & Jaarinschatting</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="text-sm text-gray-700">Klimaatzone</label>
+                <select value={inputs.zone} onChange={e => update('zone', e.target.value)} className="w-full p-2 border rounded"><option value="" disabled>Kies zone</option>{Object.keys(klimaatzones).map(z => <option key={z} value={z}>{klimaatzones[z].naam}</option>)}</select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Gewenste T binnen (°C)</label>
+                <input type="number" className="w-full p-2 border rounded no-spin" value={inputs.t_in} step="0.5" onChange={e => update('t_in', e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700 flex items-center">HDD (optioneel) <Tooltip text="Heating Degree Days (graaddagen). Een maat voor de jaarlijkse warmtevraag. Leeg laten om de standaardwaarde van de gekozen klimaatzone te gebruiken." /></label>
+                <input type="number" className="w-full p-2 border rounded no-spin" placeholder={klimaatzones[inputs.zone].hdd} value={inputs.hddCustom} onChange={e => update('hddCustom', e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Gebruik woning</label>
+                <select value={inputs.gebruik} onChange={e => update('gebruik', e.target.value)} className="w-full p-2 border rounded">{Object.keys(gebruikOpties).map(g => <option key={g} value={g}>{gebruikOpties[g].naam}</option>)}</select>
+              </div>
+            </div>
+          </div>
 
-            const BronnenEnInfo = ({ energySource }) => (
-                <div className="mt-8 p-6 bg-white rounded-lg border shadow-sm text-xs text-gray-600">
-                    <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><Info /> Bronnen & Calculatiegrondslagen</h2>
-                    <div className="space-y-2">
-                        <p><strong>Klimaatgegevens & Bouwnormen:</strong> De gebruikte klimaatzones, verwarmingsdagen en isolatiewaarden (U-waarden) zijn gebaseerd op de Franse thermische bouwregulaties (RT2012 & RT2020). Deze worden jaarlijks gevalideerd.</p>
-                        <p><strong>Energieprijzen:</strong> De prijzen voor gas en elektriciteit zijn gebaseerd op data van de <a href="https://www.cre.fr" target="_blank" rel="noopener" className="text-blue-600 underline">{energySource}</a>. Deze data wordt wekelijks geactualiseerd. Prijzen voor stookolie en pellets zijn indicatieve marktgemiddelden.</p>
-                        <p><strong>Disclaimer:</strong> Deze calculator is een model en geeft indicatieve schattingen. Werkelijke verbruiken kunnen afwijken door specifieke omstandigheden en persoonlijk gebruik. Voor een officieel advies en een DPE (Diagnostic de Performance Énergétique), raadpleeg een gecertificeerde Franse energieadviseur.</p>
-                    </div>
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            <h2 className="font-bold text-brand mb-3">2. Gebouw & Ventilatie</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+               <div>
+                <label className="text-sm text-gray-700">Verwarmd volume V (m³)</label>
+                <input type="number" className="w-full p-2 border rounded no-spin" value={inputs.volume} onChange={e => update('volume', e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700 flex items-center">Ventilatie n (1/u) <Tooltip text="Luchtwisselingen per uur (ACH). 0.3-0.5 voor een modern, luchtdicht huis met mechanische ventilatie. 0.7-1.5 voor een ouder, 'ademend' huis." /></label>
+                <input type="number" className="w-full p-2 border rounded no-spin" value={inputs.n_ach} step="0.05" onChange={e => update('n_ach', e.target.value)} />
+              </div>
+               <div>
+                <label className="text-sm text-gray-700">Verwarmde ruimtes</label>
+                <select value={inputs.verwarmdeRuimtes} onChange={e => update('verwarmdeRuimtes', e.target.value)} className="w-full p-2 border rounded"><option value="heel">Heel huis</option><option value="leef">Alleen leefruimtes</option><option value="min">Minimaal</option></select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Ventilatiegedrag</label>
+                <select value={inputs.verwarmdeRuimtes} onChange={e => update('ventilatieGedrag', e.target.value)} className="w-full p-2 border rounded"><option value="normaal">Normaal</option><option value="veel">Veel ventileren</option><option value="open">Ramen vaak open</option></select>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            <h2 className="font-bold text-brand mb-3">3. Isolatie & Oppervlaktes</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {['muur', 'raam', 'dak', 'vloer'].map(k => (
+                <div key={k}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">{k.charAt(0).toUpperCase() + k.slice(1)} <Tooltip text={`U-waarde (W/m²K) is de isolatiewaarde. Hoe lager, hoe beter. De presets zijn typische waarden.`} /></label>
+                  <input type="number" className="w-full p-2 border rounded no-spin mb-2" placeholder="Oppervlakte A (m²)" value={inputs[k + 'A']} onChange={e => update(k + 'A', e.target.value)} />
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {Object.keys(uWAARDE_PRESETS[k]).map(p => (<button key={p} onClick={() => setPreset(k, p)} className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200">{p}</button>))}
+                  </div>
+                  <input type="number" step="0.01" className="w-full p-2 border rounded no-spin" placeholder={`U-waarde van ${k}`} value={inputs[k + 'U']} onChange={e => update(k + 'U', e.target.value)} />
                 </div>
-            );
-            
-            const CalculationBreakdownModal = ({ isOpen, onClose }) => {
-                if (!isOpen || !results.klimaatInfo) return null;
-                const f = (num) => (num || 0).toFixed(0);
-                const f2 = (num) => (num || 0).toFixed(2);
-                
-                return (
-                    <div className="modal-overlay" onClick={onClose}>
-                        <div className="modal-content" onClick={e => e.stopPropagation()}>
-                            <div ref={breakdownRef} className="p-4">
-                                <h2 className="text-xl font-bold mb-4">Berekeningsoverzicht</h2>
-                                <div className="text-sm space-y-4">
-                                    <div><h3 className="font-semibold text-gray-800 border-b pb-1 mb-2">Stap 1: Bruto Warmteverlies</h3>
-                                        <p>Het temperatuurverschil is <strong className="text-blue-600">{f2(results.tempDiff)}°C</strong> ({f(inputs.binnenTemp)}°C binnen - {f(results.buitenTemp)}°C buiten in zone {inputs.klimaatzone}).</p>
-                                        <ul className="list-disc list-inside mt-1 text-gray-600">
-                                            <li>Muren: {f(inputs.muurOppervlakte)}m² * {f2(inputs.muurUwaarde)}U * {f2(results.tempDiff)}°C = <strong>{f(results.muurVerlies)} W</strong></li>
-                                            <li>Ramen: {f(inputs.raamOppervlakte)}m² * {f2(inputs.raamUwaarde)}U * {f2(results.tempDiff)}°C = <strong>{f(results.raamVerlies)} W</strong></li>
-                                            <li>Dak: {f(inputs.dakOppervlakte)}m² * {f2(inputs.dakUwaarde)}U * {f2(results.tempDiff)}°C = <strong>{f(results.dakVerlies)} W</strong></li>
-                                            <li>Vloer: {f(inputs.vloerOppervlakte)}m² * {f2(inputs.vloerUwaarde)}U * {f2(results.tempDiff)}°C = <strong>{f(results.vloerVerlies)} W</strong></li>
-                                        </ul>
-                                        <p className="mt-1">Totaal Bruto Verlies: <strong className="text-blue-600">{f(results.bruttoVerlies)} W</strong></p>
-                                    </div>
-                                    <div><h3 className="font-semibold text-gray-800 border-b pb-1 mb-2">Stap 2: Jaarlijks Energieverbruik</h3>
-                                        <p>Het bruto verlies wordt gecorrigeerd met factoren voor het klimaat en uw gedrag.</p>
-                                        <ul className="list-disc list-inside mt-1 text-gray-600">
-                                            <li>Klimaatfactor ({results.klimaatInfo.naam}): <strong>x{f2(results.klimaatInfo.factor)}</strong></li>
-                                            <li>Gebruiksfactor ({woningGebruikOpties[inputs.woningGebruik].naam}): <strong>x{f2(results.gebruiksFactor)}</strong></li>
-                                            <li>Gedragsfactor (verwarmde ruimtes & ventilatie): <strong>x{f2(results.gedragsFactorObject.verwarmdeRuimtes * results.gedragsFactorObject.ventilatieGedrag)}</strong></li>
-                                        </ul>
-                                        <p className="mt-1">Dit resulteert in een jaarverbruik van <strong className="text-blue-600">{f(results.jaarlijkseKwh)} kWh</strong>, gebaseerd op {f(results.klimaatInfo.verwarmingsDagen * results.gebruiksFactor)} verwarmingsdagen.</p>
-                                    </div>
-                                    <div><h3 className="font-semibold text-gray-800 border-b pb-1 mb-2">Stap 3: Jaarlijkse Kosten</h3>
-                                         <p>Het verbruik wordt verdeeld over hoofd- en bijverwarming.</p>
-                                         <ul className="list-disc list-inside mt-1 text-gray-600">
-                                            <li>Hoofdverwarming ({inputs.hoofdverwarmingType}): {f(results.hoofdverwarmingKwh)} kWh = <strong>€{f(results.hoofdverwarmingKosten)}</strong></li>
-                                            {inputs.bijverwarmingType !== 'geen' && <li>Bijverwarming ({inputs.bijverwarmingType}): {f(results.bijverwarmingKwh)} kWh = <strong>€{f(results.bijverwarmingKosten)}</strong></li>}
-                                         </ul>
-                                         {inputs.zonnepanelenAantal > 0 && <p className="mt-1 text-green-700">Hierop wordt een besparing van <strong>€{f(results.zonBesparing)}</strong> door zonnepanelen toegepast.</p>}
-                                         <p className="mt-2 text-lg">Totaal Geschatte Jaarkosten: <strong className="text-brand-red">€{f(results.totaleJaarKosten)}</strong></p>
-                                    </div>
-                                    <div><h3 className="font-semibold text-gray-800 border-b pb-1 mb-2">Bronnen & Disclaimer</h3>
-                                         <p className="text-xs text-gray-500">Prijzen o.b.v. {energyPrices.source}. Dit is een model; werkelijke kosten kunnen afwijken. Raadpleeg een expert voor een DPE.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4 mt-6">
-                                <button onClick={handleGeneratePdf} disabled={isGeneratingPdf} className="flex-1 p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 flex items-center justify-center gap-2">
-                                    <Download/> {isGeneratingPdf ? 'Moment...' : 'Download als PDF'}
-                                </button>
-                                <button onClick={onClose} className="flex-1 p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Sluiten</button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
+              ))}
+            </div>
+          </div>
 
-            return (
-                <div className="calculator-wrapper">
-                    <div className="text-center mb-6 bg-white p-6 rounded-lg shadow-sm">
-                        <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center justify-center gap-3">
-                            <Calculator /> Warmteverlies Calculator Frankrijk
-                        </h1>
-                        <p className="text-gray-600">Bereken het warmteverlies van je woning en ontdek waar je energie verliest.</p>
-                        <div className="text-sm text-gray-600 mt-2">
-                            Een initiatief van <a href="https://www.infofrankrijk.com" target="_blank" rel="noopener" className="text-blue-600 underline">InfoFrankrijk.com</a>, <a href="https://www.nederlanders.fr" target="_blank" rel="noopener" className="text-blue-600 underline">Nederlanders.fr</a> en <a href="https://www.nedergids.nl" target="_blank" rel="noopener" className="text-blue-600 underline">Nedergids.nl</a>
-                        </div>
-                    </div>
-                    
-                    <div className="calculator-layout">
-                        <div className="results-container">
-                            <KostenOverzicht openBreakdown={() => setIsBreakdownModalOpen(true)} />
-                            <div className="mt-6"><HeatLossChart results={results}/></div>
-                            <div className="mt-6"><HouseVisualization results={results} /></div>
-                        </div>
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            <h2 className="font-bold text-brand mb-3">4. Verwarming & Zonnepanelen</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div>
+                <label className="text-sm text-gray-700">Hoofdverwarming</label>
+                <select value={inputs.hoofd} onChange={e => update('hoofd', e.target.value)} className="w-full p-2 border rounded"><option value="gas">Gas</option><option value="fioul">Fioul</option><option value="elektrisch">Elektrisch (direct)</option><option value="warmtepomp">Warmtepomp (lucht-water)</option><option value="hout">Hout (CV)</option><option value="pellets">Pelletketel</option></select>
+              </div>
+              {inputs.hoofd === 'warmtepomp' ? (
+                <div><label className="text-sm text-gray-700 flex items-center">SCOP <Tooltip text="Seasonal COP. Het seizoensgemiddelde rendement. Een SCOP van 3.5 betekent dat 1 kWh elektriciteit 3.5 kWh warmte levert over een heel jaar." /></label><input type="number" step="0.1" className="w-full p-2 border rounded no-spin" value={inputs.mainSCOP} onChange={e => update('mainSCOP', e.target.value)} /></div>
+              ) : (
+                <div><label className="text-sm text-gray-700">Rendement (%)</label><input type="number" className="w-full p-2 border rounded no-spin" value={inputs.etaMain} onChange={e => update('etaMain', e.target.value)} /></div>
+              )}
+              <div>
+                <label className="text-sm text-gray-700">Bijverwarming</label>
+                <select value={inputs.bij} onChange={e => update('bij', e.target.value)} className="w-full p-2 border rounded"><option value="geen">Geen</option><option value="houtkachel">Houtkachel</option><option value="open_haard">Open haard</option><option value="inverter_ac">Inverter airco (lucht-lucht)</option><option value="pellets">Pelletkachel</option><option value="petroleum">Petroleum</option><option value="elektrisch">Elektrisch</option></select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Intensiteit 'bij'</label>
+                <select value={inputs.bijIntensity} onChange={e => update('bijIntensity', e.target.value)} className="w-full p-2 border rounded" disabled={inputs.bij === 'geen'}><option value="incidenteel">Incidenteel (~10%)</option><option value="regelmatig">Regelmatig (~30%)</option><option value="hoofdverwarming">Hoog aandeel (~80%)</option></select>
+              </div>
+              {inputs.bij === 'inverter_ac' && (
+                <div><label className="text-sm text-gray-700">SCOP (airco)</label><input type="number" step="0.1" className="w-full p-2 border rounded no-spin" value={inputs.bijSCOP} onChange={e => update('bijSCOP', e.target.value)} /></div>
+              )}
+            </div>
+            <div className="grid md:grid-cols-3 gap-3 mt-3">
+              <div>
+                <label className="text-sm text-gray-700">PV-panelen (aantal)</label>
+                <input type="number" className="w-full p-2 border rounded no-spin" value={inputs.pvN} onChange={e => update('pvN', e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Oriëntatie</label>
+                <select value={inputs.pvOri} onChange={e => update('pvOri', e.target.value)} className="w-full p-2 border rounded" disabled={inputs.pvN <= 0}><option value="zuid">Zuid</option><option value="zuidwest">Zuidwest</option><option value="zuidoost">Zuidoost</option><option value="oost">Oost</option><option value="west">West</option></select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Hellingshoek</label>
+                <select value={inputs.pvTilt} onChange={e => update('pvTilt', e.target.value)} className="w-full p-2 border rounded" disabled={inputs.pvN <= 0}><option value="optimaal">Optimaal (~35°)</option><option value="vlak">Vlak</option><option value="steil">Steil (>45°)</option></select>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            <h2 className="font-bold text-brand mb-3">5. Zwembad (Optioneel)</h2>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={inputs.poolEnabled} onChange={e => update('poolEnabled', e.target.checked)} /> Zwembad meerekenen</label>
+            </div>
+            {inputs.poolEnabled && (
+              <div className="grid md:grid-cols-3 gap-3 mt-3">
+                <div><label className="text-sm text-gray-700">Oppervlak (m²)</label><input type="number" className="w-full p-2 border rounded no-spin" value={inputs.poolA} onChange={e => update('poolA', e.target.value)} /></div>
+                <div><label className="text-sm text-gray-700">Seizoen (dagen)</label><input type="number" className="w-full p-2 border rounded no-spin" value={inputs.poolSeasonDays} onChange={e => update('poolSeasonDays', e.target.value)} /></div>
+                <div><label className="text-sm text-gray-700">Pompvermogen (W)</label><input type="number" className="w-full p-2 border rounded no-spin" value={inputs.poolPumpW} onChange={e => update('poolPumpW', e.target.value)} /></div>
+                <div><label className="text-sm text-gray-700">Pompuren/dag</label><input type="number" className="w-full p-2 border rounded no-spin" value={inputs.poolPumpH} onChange={e => update('poolPumpH', e.target.value)} /></div>
+                <div><label className="text-sm text-gray-700">Afdekking</label><select className="w-full p-2 border rounded" value={inputs.poolCover} onChange={e => update('poolCover', e.target.value)}><option value="geen">Geen</option><option value="solar">Solar cover</option><option value="lamellen">Lamellen</option></select></div>
+                <div><label className="text-sm text-gray-700">Windblootstelling</label><select className="w-full p-2 border rounded" value={inputs.poolWind} onChange={e => update('poolWind', e.target.value)}><option value="beschut">Beschut</option><option value="normaal">Normaal</option><option value="winderig">Winderig</option></select></div>
+                <div><label className="text-sm text-gray-700">Verwarming</label><select className="w-full p-2 border rounded" value={inputs.poolHeat} onChange={e => update('poolHeat', e.target.value)}><option value="geen">Geen</option><option value="wp">Warmtepomp</option><option value="elektra">Elektrisch</option><option value="gas">Gas</option></select></div>
+                <div><label className="text-sm text-gray-700">Doel T (°C)</label><input type="number" className="w-full p-2 border rounded no-spin" value={inputs.poolTargetT} onChange={e => update('poolTargetT', e.target.value)} /></div>
+                {inputs.poolHeat === 'wp' && (<div><label className="text-sm text-gray-700">SCOP zwembad-WP</label><input type="number" step="0.1" className="w-full p-2 border rounded no-spin" value={inputs.poolSCOP} onChange={e => update('poolSCOP', e.target.value)} /></div>)}
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+             <h2 className="font-bold text-brand mb-3">6. Energieprijzen</h2>
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                <div><label className="text-xs">Stroom €/kWh</label><input type="number" step="0.001" className="w-full p-1 border rounded no-spin" value={inputs.elPrice} onChange={e => update('elPrice', e.target.value)} /></div>
+                <div><label className="text-xs">Gas €/kWh</label><input type="number" step="0.001" className="w-full p-1 border rounded no-spin" value={inputs.gasPrice} onChange={e => update('gasPrice', e.target.value)} /></div>
+                <div><label className="text-xs">Fioul €/L</label><input type="number" step="0.01" className="w-full p-1 border rounded no-spin" value={inputs.fioulPrice} onChange={e => update('fioulPrice', e.target.value)} /></div>
+                <div><label className="text-xs">Pellets €/kg</label><input type="number" step="0.01" className="w-full p-1 border rounded no-spin" value={inputs.pelletPrice} onChange={e => update('pelletPrice', e.target.value)} /></div>
+                <div><label className="text-xs">Hout €/kWh</label><input type="number" step="0.01" className="w-full p-1 border rounded no-spin" value={inputs.woodPrice} onChange={e => update('woodPrice', e.target.value)} /></div>
+                <div><label className="text-xs">Petroleum €/L</label><input type="number" step="0.01" className="w-full p-1 border rounded no-spin" value={inputs.petroleumPrice} onChange={e => update('petroleumPrice', e.target.value)} /></div>
+             </div>
+          </div>
+        </div>
+      </div>
 
-                        <div className="inputs-container">
-                             <div style={{display: activeTab === 'invoer' ? 'block' : 'none' }} className="space-y-6">
-                                <div className="bg-white p-6 rounded-lg border shadow-sm"><h2 className="text-xl font-bold mb-4 flex items-center gap-2"><MapPin /> Locatie & Klimaat</h2><div className="grid md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-2 text-gray-700">Klimaatzone Frankrijk</label><select value={inputs.klimaatzone} onChange={(e) => updateInput('klimaatzone', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg"><option value="H1a">H1a - Noordoost (Reims, Metz)</option><option value="H1b">H1b - Noord/Centrum (Parijs, Lille)</option><option value="H1c">H1c - West (Brest, Caen)</option><option value="H2a">H2a - Midden-west (Poitiers, Tours)</option><option value="H2b">H2b - Midden-oost (Lyon, Dijon)</option><option value="H2c">H2c - Zuidwest (Bordeaux, Toulouse)</option><option value="H2d">H2d - Zuidoost (Avignon, Montpellier)</option><option value="H3">H3 - Mediterraan (Nice, Marseille)</option></select></div><div><label className="block text-sm font-medium mb-2 text-gray-700">Gewenste binnen temperatuur (°C)</label><input type="number" value={inputs.binnenTemp} onChange={(e) => updateInput('binnenTemp', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" min="15" max="25" step="0.5" /></div></div></div>
-                                <div className="bg-white p-6 rounded-lg border shadow-sm"><h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Beach /> Woninggebruik & Gedrag</h2><div className="grid md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-2 text-gray-700">Type woninggebruik</label><select value={inputs.woningGebruik} onChange={(e) => updateInput('woningGebruik', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg"><option value="volledig">Volledig jaar</option><option value="secondaire_zomer">Zomer + tussenseizoen</option><option value="secondaire_winter">Winter weekends</option><option value="weekend">Alleen weekends</option></select></div><div><label className="block text-sm font-medium mb-2 text-gray-700">Verwarmde ruimtes</label><select value={inputs.verwarmdeRuimtes} onChange={(e) => updateInput('verwarmdeRuimtes', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg"><option value="heel_huis">Heel huis</option><option value="leefruimtes">Alleen leefruimtes</option><option value="minimaal">Minimaal (1-2 kamers)</option></select></div><div className="md:col-span-2"><label className="block text-sm font-medium mb-2 text-gray-700">Ventilatie gedrag</label><select value={inputs.ventilatieGedrag} onChange={(e) => updateInput('ventilatieGedrag', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg"><option value="normaal">Normaal</option><option value="veel_ventileren">Veel ventileren</option><option value="ramen_open">Ramen vaak open</option></select></div></div></div>
-                                <div className="bg-white p-6 rounded-lg border shadow-sm"><h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Fire /> Verwarmingssysteem</h2><div className="grid md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-2">Hoofdverwarming</label><select value={inputs.hoofdverwarmingType} onChange={(e) => updateInput('hoofdverwarmingType', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg"><option value="gas">Gas</option><option value="elektriciteit">Elektriciteit</option><option value="fioul">Stookolie (fioul)</option></select></div><div><label className="block text-sm font-medium mb-2">Bijverwarming</label><select value={inputs.bijverwarmingType} onChange={(e) => updateInput('bijverwarmingType', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg"><option value="geen">Geen</option><option value="elektrisch">Elektrisch</option><option value="hout">Hout</option><option value="pellets">Pellets</option></select></div><div className="md:col-span-2"><label className="block text-sm font-medium mb-2">Gebruik bijverwarming</label><select value={inputs.bijverwarmingIntensiteit} onChange={(e) => updateInput('bijverwarmingIntensiteit', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" disabled={inputs.bijverwarmingType === 'geen'}><option value="incidenteel">Incidenteel (~10%)</option><option value="regelmatig">Regelmatig (~30%)</option><option value="hoofdverwarming">Intensief (~80%)</option></select></div></div></div>
-                                <div className="bg-white p-6 rounded-lg border shadow-sm"><h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Sun /> Zonnepanelen (optioneel)</h2><div className="grid md:grid-cols-3 gap-4"><div><label className="block text-sm font-medium mb-2">Aantal</label><input type="number" value={inputs.zonnepanelenAantal} onChange={(e) => updateInput('zonnepanelenAantal', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" min="0" max="50"/></div><div><label className="block text-sm font-medium mb-2">Oriëntatie</label><select value={inputs.zonnepanelenOrientatie} onChange={(e) => updateInput('zonnepanelenOrientatie', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" disabled={!inputs.zonnepanelenAantal > 0}><option value="zuid">Zuid</option><option value="zuidwest">Zuidwest</option><option value="zuidoost">Zuidoost</option><option value="oost">Oost</option><option value="west">West</option></select></div><div><label className="block text-sm font-medium mb-2">Hellingshoek</label><select value={inputs.zonnepanelenHelling} onChange={(e) => updateInput('zonnepanelenHelling', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" disabled={!inputs.zonnepanelenAantal > 0}><option value="optimaal">Optimaal (30-45°)</option><option value="vlak">Vlak dak (0-15°)</option><option value="steil">Steil dak (45°+)</option></select></div></div></div>
-                                <div className="bg-white p-6 rounded-lg border shadow-sm"><h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Home /> Oppervlaktes & <Thermometer/> Isolatie (U-waarden)</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label className="block text-sm font-medium mb-2">Muren</label><input type="number" value={inputs.muurOppervlakte} onChange={(e) => updateInput('muurOppervlakte', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg mb-2" placeholder="Oppervlakte (m²)"/><div className="flex gap-1 mb-2 flex-wrap">{Object.keys(uWaardePresets.muur).map(p => <button key={p} onClick={() => setPreset('muur', p)} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200">{p}</button>)}</div><input type="number" step="0.1" value={inputs.muurUwaarde} onChange={(e) => updateInput('muurUwaarde', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" placeholder="U-waarde"/></div><div><label className="block text-sm font-medium mb-2">Ramen</label><input type="number" value={inputs.raamOppervlakte} onChange={(e) => updateInput('raamOppervlakte', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg mb-2" placeholder="Oppervlakte (m²)"/><div className="flex gap-1 mb-2 flex-wrap">{Object.keys(uWaardePresets.raam).map(p => <button key={p} onClick={() => setPreset('raam', p)} className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded hover:bg-green-200">{p}</button>)}</div><input type="number" step="0.1" value={inputs.raamUwaarde} onChange={(e) => updateInput('raamUwaarde', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" placeholder="U-waarde"/></div><div><label className="block text-sm font-medium mb-2">Dak</label><input type="number" value={inputs.dakOppervlakte} onChange={(e) => updateInput('dakOppervlakte', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg mb-2" placeholder="Oppervlakte (m²)"/><div className="flex gap-1 mb-2 flex-wrap">{Object.keys(uWaardePresets.dak).map(p => <button key={p} onClick={() => setPreset('dak', p)} className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded hover:bg-purple-200">{p}</button>)}</div><input type="number" step="0.1" value={inputs.dakUwaarde} onChange={(e) => updateInput('dakUwaarde', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" placeholder="U-waarde"/></div><div><label className="block text-sm font-medium mb-2">Vloer</label><input type="number" value={inputs.vloerOppervlakte} onChange={(e) => updateInput('vloerOppervlakte', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg mb-2" placeholder="Oppervlakte (m²)"/><div className="flex gap-1 mb-2 flex-wrap">{Object.keys(uWaardePresets.vloer).map(p => <button key={p} onClick={() => setPreset('vloer', p)} className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200">{p}</button>)}</div><input type="number" step="0.1" value={inputs.vloerUwaarde} onChange={(e) => updateInput('vloerUwaarde', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg" placeholder="U-waarde"/></div></div></div>
-                             </div>
-                            <div style={{display: activeTab === 'analyse' ? 'block' : 'none' }} className="space-y-6">
-                                <HeatLossChart results={results}/>
-                                <HouseVisualization results={results}/>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <BronnenEnInfo energySource={energyPrices.source} />
+      {/* --- Modal & Floating Frame --- */}
+      {showBreakdown && (
+        <div className="modal" onClick={() => setShowBreakdown(false)}>
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <div ref={breakdownRef} className="p-4">
+              <h3 className="text-xl font-bold mb-4 text-brand">Berekeningsoverzicht</h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div className="bg-gray-50 rounded p-3"><h4 className="font-semibold mb-1">Ontwerp</h4><p>ΔT = {f1(dT)} K (binnen {f1(inputs.t_in)}°C, buiten {f0(t_out)}°C)</p><p>H_tr (transmissie) = {f1(results.Htr)} W/K</p><p>H_vent (ventilatie) = {f1(results.Hvent)} W/K</p><p>H_totaal = <b>{f1(results.Htot)} W/K</b></p><p>P_ontwerp = <b>{f0(results.P)} W</b></p></div>
+                <div className="bg-gray-50 rounded p-3"><h4 className="font-semibold mb-1">Jaarverbruik</h4><p>HDD = {f0(hdd)} · zonefactor {zone.factor}</p><p>Gedragsfactor toegepast</p><p>Warmtevraag ≈ <b>{f0(results.E_kWh)} kWh/j</b></p></div>
+                <div className="bg-gray-50 rounded p-3"><h4 className="font-semibold mb-1">Kosten</h4><p>Hoofd + bijverwarming: €{f0(results.costs.heat_main + results.costs.heat_bij)}</p>{inputs.poolEnabled && <p>Zwembad (totaal): €{f0(results.costs.poolHeat + results.costs.poolPump)}</p>}<p>Totaal: <b>€{f0(results.costs.total)}</b></p></div>
+                <div className="bg-gray-50 rounded p-3"><h4 className="font-semibold mb-1">Verdeling Verlies</h4><ul className="list-disc list-inside">{Object.keys(results.verdeling.pct).map(k => <li key={k}>{k}: {f0(results.verdeling.pct[k])}%</li>)}</ul></div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4"><button className="bg-brand text-white px-4 py-2 rounded" onClick={downloadPDF}><Icon.file /> Download PDF</button><button className="bg-gray-200 px-4 py-2 rounded" onClick={() => setShowBreakdown(false)}>Sluiten</button></div>
+          </div>
+        </div>
+      )}
 
-                    <CalculationBreakdownModal 
-                        isOpen={isBreakdownModalOpen} 
-                        onClose={() => setIsBreakdownModalOpen(false)}
-                    />
+      <div className="fixed z-40 left-0 right-0 bottom-0">
+        <div className="bg-white/95 backdrop-blur-sm border-t shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <div className="font-semibold text-gray-800">Totaal per jaar: <span className="text-2xl font-extrabold text-brand">€{f0(results.costs.total)}</span></div>
+            <div className="text-sm text-gray-600">Per maand: <span className="font-bold">€{f0(results.costs.total / 12)}</span></div>
+            <div className="text-xs text-gray-500">Ruimteverw.: €{f0(results.costs.heat_main + results.costs.heat_bij)}{inputs.poolEnabled ? ` · Zwembad: €${f0(results.costs.poolHeat + results.costs.poolPump)}` : ''}</div>
+          </div>
+        </div>
+      </div>
+       <div className="text-center text-xs text-gray-500 mt-4 pb-20">
+            <p>Disclaimer: Deze tool geeft een indicatie op basis van gestandaardiseerde rekenmethodes (o.a. EN ISO 13789, 6946). Resultaten zijn afhankelijk van de juistheid van de ingevoerde data en specifiek gebruikersgedrag.</p>
+            <p>Voor officiële audits (DPE/audit énergétique) is software vereist die is gevalideerd door het CSTB en conform de Franse RT/RE-regelgeving.</p>
+        </div>
+    </div>
+  );
+}
 
-                    {isCostsModalOpen && (
-                        <div className="modal-overlay" onClick={() => setIsCostsModalOpen(false)}>
-                            <div className="w-full max-w-md" onClick={e => e.stopPropagation()}>
-                                <KostenOverzicht openBreakdown={() => { setIsCostsModalOpen(false); setIsBreakdownModalOpen(true); }} />
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="mobile-fab-stack">
-                        <button onClick={() => setActiveTab('invoer')} className="fab-button" title="Invoer"><span className="text-2xl"><Edit/></span></button>
-                        <button onClick={() => setActiveTab('analyse')} className="fab-button" title="Analyse"><span className="text-2xl"><Chart/></span></button>
-                        <button onClick={() => setIsCostsModalOpen(true)} className="fab-button fab-button-costs" title="Kosten">
-                            <div className="flex items-center font-semibold text-lg">
-                                <span className="mr-2 text-xl">€</span>
-                                <span>{isCalculating ? '...' : (results.totaleJaarKosten || 0).toFixed(0)}</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-        
-        ReactDOM.render(<WarmteverliesCalculator />, document.getElementById('root'));
-    </script>
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
 </body>
 </html>
-
