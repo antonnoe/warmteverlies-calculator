@@ -567,5 +567,29 @@ function App(){
 
 ReactDOM.render(<App/>, document.getElementById('root'))
 </script>
+  
+<!-- Auto-resize iFrame naar ouder (WordPress) via postMessage -->
+<script>
+  (function () {
+    function postH() {
+      var h = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      );
+      // Stuur de hoogte in pixels naar de ouder (WP)
+      try {
+        window.parent.postMessage(
+          { type: "warmteverlies-calculator-height", height: h },
+          "*"
+        );
+      } catch (e) { /* ignore */ }
+    }
+    window.addEventListener("load", postH);
+    window.addEventListener("resize", postH);
+    var ro = new ResizeObserver(postH);
+    ro.observe(document.body);
+    setInterval(postH, 1500);
+  })();
+</script>
 </body>
 </html>
