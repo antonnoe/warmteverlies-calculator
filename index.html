@@ -548,6 +548,21 @@ function App(){
                   <p>€ per kWh/L/kg – worden direct toegepast in de kosten. Pas aan naar jouw contract.</p>
                 </div>
               )}
+            {helpTopic==='faq' && (
+              <div>
+                <h4 className="font-semibold mb-2">Veelgestelde vragen</h4>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">1) Hoe betrouwbaar is de uitkomst?</summary><div className="mt-1">De tool gebruikt fysische formules en realistische defaults. Het blijft een benadering; nauwkeurigheid stijgt met goede invoer (U/A, n/ACH, HDD, SCOP, prijzen).</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">2) Wat betekenen U-, R- en Σ(U·A)?</summary><div className="mt-1"><b>U</b> (W/m²K): lager is beter. <b>R</b> (m²K/W): hoger is beter. Transmissie: H<sub>tr</sub>=Σ(U·A).</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">3) Wat is n (ACH) en H<sub>vent</sub>?</summary><div className="mt-1">H<sub>vent</sub>=0,34·n·V; n≈0,3–0,5 (luchtdicht+MV), 0,7–1,0 (ouder huis).</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">4) HDD en ΔT?</summary><div className="mt-1">HDD = som temperatuurdeficits; Jaar: E≈H·HDD·24/1000. ΔT = T_in − T_out,zone.</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">5) SCOP/COP (WP/airco)</summary><div className="mt-1">Elektriciteitsvraag = warmtevraag/SCOP; bij vorst zakt momentane COP.</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">6) Bijverwarming en intensiteit</summary><div className="mt-1">Type + intensiteit verdelen de jaarwarmtevraag; kosten per energiedrager berekend.</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">7) Zonnepanelen & eigen verbruik</summary><div className="mt-1">Opbrengst via instraling×oriëntatie×helling; ~70% eigen verbruik eerst verrekend met elektrische verbruikers.</div></details>
+                <details className="mb-2"><summary className="cursor-pointer font-medium">8) Zwembad</summary><div className="mt-1">Pomp: W×uren×dagen. Verwarming: oppervlaktemodel + afdekking/wind; WP-SCOP of gas/elektra.</div></details>
+                <details><summary className="cursor-pointer font-medium">Rekengrondslagen (kort)</summary><div className="mt-1 text-sm"><ul className="list-disc ml-5"><li>H_tr=Σ(U·A) [W/K]</li><li>H_vent=0,34·n·V [W/K]</li><li>P=H_tot·ΔT [W]</li><li>E≈H·HDD·24/1000 [kWh/j]</li><li>WP/airco: el=warmtevraag/SCOP</li><li>PV: opbrengst≈panelen×instraling×oriëntatie×helling; eigenverbruik ~70%</li><li>Zwembad: indicatief oppervlaktemodel + afdekking/wind</li><li>Kosten: verbruik × ingevoerde prijzen</li></ul></div></details>
+                <div className="mt-3 text-xs text-gray-600">Direct openen buiten WordPress? <a className="underline" href="https://antonnoe.github.io/warmteverlies-calculator/?compact=1" target="_blank" rel="noopener">Klik hier…</a></div>
+              </div>
+            )}
             </div>
             <div className="text-[11px] text-gray-500 mt-3">Dit is een indicatieve benadering. Nauwkeurigheid neemt toe met goede invoer (U, A, n, HDD, SCOP, prijzen).</div>
             <div className="flex justify-end mt-3"><button className="bg-[var(--brand)] text-white px-3 py-2 rounded" onClick={()=>setHelpTopic(null)}>Sluiten</button></div>
@@ -561,6 +576,7 @@ function App(){
           <div className="max-w-6xl mx-auto px-3 py-2">
             <div className="flex items-center gap-3">
               <div className="font-bold text-sm text-gray-700">Financiële doorrekening</div>
+              <button className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 border" onClick={()=>setHelpTopic('faq')} title="Veelgestelde vragen">FAQ</button>
               <div className="ml-auto text-2xl font-extrabold text-gray-900">€{f0(results.costs.total)} <span className="text-sm font-normal text-gray-500">/jaar</span></div>
             </div>
             <div className="text-xs text-gray-600">≈ €{f0(results.costs.total/12)} per maand · Hoofd €{f0(results.costs.heat_main)} · Bij €{f0(results.costs.heat_bij)}{inputs.poolEnabled?` · Zwembad verw. €${f0(results.costs.poolHeat)} · pomp €${f0(results.costs.poolPump)}`:''}</div>
