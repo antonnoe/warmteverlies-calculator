@@ -36,11 +36,12 @@
     const PRICE_DEFAULTS_USER = { elec: 0.25, gas: 1.20, fioul: 1.15, pellet: 0.60, wood: 85, propaan: 1.80, petroleum: 2.00 };
     const ENERGY_UNITS = { elec: '€/kWh', gas: '€/m³', fioul: '€/L', pellet: '€/kg', wood: '€/stère', propaan: '€/L', petroleum: '€/L' };
     const KWH_CONVERSION = { elec: 1, gas: 10, fioul: 10, pellet: 5, wood: 1800, propaan: 7.1, petroleum: 10 };
-    const HEAT_MAIN = [ { key: 'elec', label: 'Elektrisch (direct)', eff: 1, unit: 'kWh', priceKey: 'elec' }, { key: 'hp', label: 'Warmtepomp (SCOP)', eff: 3.0, unit: 'kWh', priceKey: 'elec', scop: true }, { key: 'gas', label: 'Aardgas (ketel η)', eff: 0.9, unit: 'kWh eq.', priceKey: 'gas', eta: true }, { key: 'fioul', label: 'Fioul/mazout (η)', eff: 0.85, unit: 'kWh eq.', priceKey: 'fioul', eta: true }, { key: 'pellet', label: 'Pellet‑CV (η)', eff: 0.9, unit: 'kWh eq.', priceKey: 'pellet', eta: true }, { key: 'wood', label: 'Hout‑CV (η)', eff: 0.7, unit: 'kWh eq.', priceKey: 'wood', eta: true }, ];
+    const HEAT_MAIN = [ { key: 'elec', label: 'Elektrisch (direct)', eff: 1, priceKey: 'elec' }, { key: 'hp', label: 'Warmtepomp (SCOP)', eff: 3.0, priceKey: 'elec', scop: true }, { key: 'gas', label: 'Aardgas (ketel η)', eff: 0.9, priceKey: 'gas', eta: true }, { key: 'fioul', label: 'Fioul/mazout (η)', eff: 0.85, priceKey: 'fioul', eta: true }, { key: 'pellet', label: 'Pellet‑CV (η)', eff: 0.9, priceKey: 'pellet', eta: true }, { key: 'wood', label: 'Hout‑CV (η)', eff: 0.7, priceKey: 'wood', eta: true }, ];
     const HEAT_AUX = [ { key: 'none', label: 'Geen bijverwarming', eff: 1, priceKey: null }, { key: 'inverter', label: 'Inverter‑airco (SCOP)', eff: 3.2, priceKey: 'elec', scop: true }, { key: 'elec', label: 'Elektrisch (direct)', eff: 1, priceKey: 'elec' }, { key: 'pellet', label: 'Houtpelletkachel (η)', eff: 0.85, priceKey: 'pellet', eta: true }, { key: 'wood', label: 'Houtkachel (η)', eff: 0.6, priceKey: 'wood', eta: true }, { key: 'petroleum', label: 'Petroleumkachel (η)', eff: 0.9, priceKey: 'petroleum', eta: true }, ];
     const DHW_TYPES = [ { key: 'elec', label: 'Boiler elektrisch', eff: 1, priceKey: 'elec' }, { key: 'gas', label: 'Gasgeiser/ketel (η)', eff: 0.9, priceKey: 'gas', eta: true }, { key: 'hp', label: 'WP‑boiler (SCOP)', eff: 2.5, priceKey: 'elec', scop: true }, { key: 'solar', label: 'Zonneboiler', eff: 2.0, priceKey: 'elec', note: 'Hulp‑elektra*' }, ];
     const POOL_HEAT = [ { key: 'none', label: 'Geen verwarming', eff: Infinity, priceKey: null }, { key: 'elec', label: 'Elektrisch', eff: 1, priceKey: 'elec' }, { key: 'gas', label: 'Gas (η)', eff: 0.9, priceKey: 'gas', eta: true }, { key: 'hp', label: 'Warmtepomp (SCOP)', eff: 4, priceKey: 'elec', scop: true }, ];
     const U_PRESETS = { wall: {'Ongeïsoleerd (~1975)': 2.0, 'Matig (~5cm)': 0.8, 'Goed (~10cm)': 0.4, 'Zeer goed (15cm+)': 0.25}, roof: {'Ongeïsoleerd': 3.0, 'Matig (~10cm)': 0.5, 'Goed (~20cm)': 0.25, 'Zeer goed (30cm+)': 0.15}, floor: {'Op zand': 2.2, 'Kruipruimte': 1.2, 'Matig geïsoleerd': 0.8, 'Goed geïsoleerd': 0.3}, win: {'Enkel glas': 5.5, 'Oud dubbelglas': 2.8, 'Modern HR(+)': 1.6, 'Triple HR++': 1.0} };
+    const FAQ_CONTENT = [ { q: "Hoe betrouwbaar is de uitkomst?", a: "De tool gebruikt fysisch onderbouwde formules en realistische default-waarden. Het blijft een benadering, geen officieel DPE/audit. Nauwkeurigheid stijgt met goede invoer." }, { q: "Wat betekenen U-waarde, R-waarde en Σ(U·A)?", a: "<b>U-waarde</b> (W/m²K): warmtedoorgang; hoe lager, hoe beter. <b>R-waarde</b> (m²K/W): warmteweerstand; hoe hoger, hoe beter. Het transmissieverlies wordt geschat via <b>Htr = Σ(U · A)</b>, in W/K." }, { q: "Wat is n (ACH) en Hvent?", a: "<b>n (ACH)</b> = luchtwisselingen per uur. Ventilatieverlies: <b>Hvent = 0,34 · n · V</b> (W/K), met V het verwarmde volume in m³. De factor 0,34 is een fysische constante voor lucht." }, { q: "Wat zijn HDD (graaddagen)?", a: "<b>HDD</b> (Heating Degree Days) is een maat voor de jaarlijkse stookbehoefte. Jaarwarmtevraag: <b>E ≈ H · HDD · 24 / 1000</b> (in kWh/j)." }, { q: "Wat is SCOP/COP?", a: "<b>SCOP</b> (Seasonal COP) is de seizoensprestatie van een warmtepomp. Elektriciteitsvraag ≈ warmtevraag / SCOP. Bij vorst daalt de momentane COP." } ];
 
     // --- Helper Components ---
     const fmt = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 });
@@ -87,6 +88,7 @@
     
     // --- Main App Component ---
     function App() {
+        // --- State declarations ---
         const [zone, setZone] = useState('paris');
         const [setpoint, setSetpoint] = useState('20');
         const [wallA, setWallA] = useState('120'), [wallU, setWallU] = useState('0.5');
@@ -131,6 +133,7 @@
         const [poolWind, setPoolWind] = useState('1');
         const pdfSummaryRef = useRef(null);
 
+        // --- Calculations ---
         const results = useMemo(() => {
             const pricesKwh = Object.keys(userPrices).reduce((acc, key) => {
                 acc[key] = num(userPrices[key]) / (KWH_CONVERSION[key] || 1);
@@ -171,10 +174,11 @@
             if (poolHas) {
                 const days = num(poolSeason) * 30;
                 const pumpKwh = (num(poolPumpW) / 1000) * num(poolPumpH) * days;
+                
                 const ambientTemp = ZONES.find(z => z.id === zone)?.pool_temp || 19;
                 const deltaT = Math.max(0, num(poolTargetT) - ambientTemp);
                 const thermalLossFactor = 1.16 * (poolCover === 'true' ? 0.5 : 1) * num(poolWind);
-                const thermal = num(poolVol) * deltaT * thermalLossFactor * num(poolSeason) * (30 / 5); // Normalized factor
+                const thermal = num(poolVol) * deltaT * thermalLossFactor * num(poolSeason) * (30 / 5); 
 
                 const def = POOL_HEAT.find(h => h.key === poolHeatType);
                 const eff = def?.scop ? num(poolHpScop, 4) : (def?.eta ? num(poolEta, 0.9) : 1);
@@ -219,12 +223,12 @@
               let position = 25;
               pdf.setFontSize(16);
               pdf.text("Berekeningsgrondslagen & Samenvatting", 14, 15);
-              pdf.addImage(imgData, 'PNG', 10, position, pdfWidth - 20, imgHeight);
-              heightLeft -= pageHeight;
-              while (heightLeft >= 0) {
+              pdf.addImage(imgData, 'PNG', 10, position, pdfWidth - 20, imgHeight > (pageHeight-position) ? (pageHeight-position-10) : imgHeight);
+              heightLeft -= (pageHeight-position-10);
+              while (heightLeft > 0) {
                 position = heightLeft - imgHeight;
                 pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 10, position, pdfWidth - 20, imgHeight);
+                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, imgHeight);
                 heightLeft -= pageHeight;
               }
               pdf.save("samenvatting-energiecalculator.pdf");
@@ -250,7 +254,7 @@
         );
         
         return (
-            <div>
+            <div className="pb-20">
                 <header className="bg-white border-b border-gray-200 p-4 no-print">
                     <div className="max-w-7xl mx-auto flex justify-between items-center">
                       <div>
@@ -381,17 +385,15 @@
                            <p className="text-xs text-gray-500 mb-4">Voer hier uw eigen tarieven in per gangbare eenheid. De calculator rekent dit om naar een prijs per kWh voor de berekening. Dit zijn indicatieve waarden, geen live data.</p>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {Object.keys(ENERGY_UNITS).map(key => (
-                                    <NumberInput key={key} label={key.charAt(0).toUpperCase() + key.slice(1).replace('wood', 'Stookhout').replace('pellet','Houtpellets').replace('petroleum','Petroleum').replace('propaan','Propaan')} value={userPrices[key]} onChange={val => setUserPrices(p => ({ ...p, [key]: val }))} unit={ENERGY_UNITS[key]} step="0.01" />
+                                    <NumberInput key={key} label={{'elec':'Elektriciteit', 'gas':'Gas', 'fioul':'Fioul', 'pellet':'Houtpellets', 'wood':'Stookhout', 'propaan':'Propaan', 'petroleum':'Petroleum'}[key]} value={userPrices[key]} onChange={val => setUserPrices(p => ({ ...p, [key]: val }))} unit={ENERGY_UNITS[key]} step="0.01" />
                                 ))}
                             </div>
                         </AccordionSection>
                         
                         <AccordionSection number={6} title="Veelgestelde Vragen & Rekenregels" icon={<Icon path={icons.faq} />}>
-                           <details className="mb-2"><summary className="cursor-pointer font-medium text-sm">Hoe betrouwbaar is de uitkomst?</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2">De tool gebruikt fysisch onderbouwde formules en realistische default-waarden. Het blijft een benadering, geen officieel DPE/audit. Nauwkeurigheid stijgt met goede invoer.</p></details>
-                           <details className="mb-2"><summary className="cursor-pointer font-medium text-sm">Wat betekenen U-waarde, R-waarde en Σ(U·A)?</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2"><b>U-waarde</b> (W/m²K): warmtedoorgang; hoe lager, hoe beter. <b>R-waarde</b> (m²K/W): warmteweerstand; hoe hoger, hoe beter. Het transmissieverlies wordt geschat via <b>Htr = Σ(U · A)</b>, in W/K.</p></details>
-                           <details className="mb-2"><summary className="cursor-pointer font-medium text-sm">Wat is n (ACH) en Hvent?</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2"><b>n (ACH)</b> = luchtwisselingen per uur. Ventilatieverlies: <b>Hvent = 0,34 · n · V</b> (W/K), met V het verwarmde volume in m³. De factor 0,34 is een fysische constante voor lucht.</p></details>
-                           <details className="mb-2"><summary className="cursor-pointer font-medium text-sm">Wat zijn HDD (graaddagen)?</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2"><b>HDD</b> (Heating Degree Days) is een maat voor de jaarlijkse stookbehoefte. Jaarwarmtevraag: <b>E ≈ H · HDD · 24 / 1000</b> (in kWh/j).</p></details>
-                           <details className="mb-2"><summary className="cursor-pointer font-medium text-sm">Wat is SCOP/COP?</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2"><b>SCOP</b> (Seasonal COP) is de seizoensprestatie van een warmtepomp. Elektriciteitsvraag ≈ warmtevraag / SCOP. Bij vorst daalt de momentane COP.</p></details>
+                           {FAQ_CONTENT.map(item => (
+                             <details key={item.q} className="mb-2"><summary className="cursor-pointer font-medium text-sm">{item.q}</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2" dangerouslySetInnerHTML={{__html: item.a}}></p></details>
+                           ))}
                            <h4 className="font-semibold mt-4 mb-2">Rekengrondslagen (kort overzicht)</h4>
                            <ul className="text-xs text-neutral-600 space-y-1 list-disc pl-5">
                             <li>Transmissie: Htr = Σ(U · A) [W/K]</li>
@@ -429,6 +431,15 @@
                          </div>
                     </div>
                 </main>
+                
+                <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 p-3 no-print shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+                    <div className="max-w-7xl mx-auto flex items-center justify-center lg:justify-end">
+                        <div className="text-center">
+                            <div className="text-sm text-gray-600">Totale Jaarkosten</div>
+                            <div className="text-2xl font-bold text-[var(--brand-color)]">{money(results.totalCost)}</div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div id="pdf-content-wrapper" className="hidden" ref={pdfSummaryRef}>
                   <div className="p-8">
