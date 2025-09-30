@@ -24,7 +24,6 @@
 </head>
 <body>
   <div id="app"></div>
-  <div id="pdf-summary" class="hidden"></div>
 
   <script type="text/babel">
     const { useState, useMemo, useCallback, useRef } = React;
@@ -147,8 +146,9 @@
             const Vloss = 0.34 * num(volume) * num(ach);
             const heatDemand = (UA + Vloss) * hdd / 1000 * (1 + num(warmupPct) / 100);
             
-            const auxFrac = Math.min(0.9, num(auxShare) / 100);
+            const auxFrac = auxType === 'none' ? 0 : Math.min(0.9, num(auxShare) / 100);
             const mainFrac = 1 - auxFrac;
+            
             const mainDef = HEAT_MAIN.find(h => h.key === mainType);
             const auxDef = HEAT_AUX.find(h => h.key === auxType) || {};
             const mainEff = mainDef?.scop ? num(mainScop, 3.2) : (mainDef?.eta ? num(mainEta, 0.9) : (mainDef?.eff || 1));
@@ -174,7 +174,6 @@
             if (poolHas) {
                 const days = num(poolSeason) * 30;
                 const pumpKwh = (num(poolPumpW) / 1000) * num(poolPumpH) * days;
-                
                 const ambientTemp = ZONES.find(z => z.id === zone)?.pool_temp || 19;
                 const deltaT = Math.max(0, num(poolTargetT) - ambientTemp);
                 const thermalLossFactor = 1.16 * (poolCover === 'true' ? 0.5 : 1) * num(poolWind);
@@ -185,7 +184,7 @@
                 const input = def.key === 'none' ? 0 : (thermal / eff);
                 const elecUse = pumpKwh + (def?.priceKey === 'elec' ? input : 0);
                 const gasUse = (def?.priceKey === 'gas' ? input : 0);
-                const poolCost = elecUse * (pricesKwh.elec || 0) + gasUse * (pricesKwh.gas || 0)
+                const poolCost = elecUse * (pricesKwh.elec || 0) + gasUse * (pricesKwh.gas || 0);
                 pool = { kwh: pumpKwh + input, cost: poolCost, elec: elecUse, gas: gasUse };
             }
             
@@ -211,21 +210,24 @@
 
         const handlePdfDownload = () => {
           const { jsPDF } = window.jspdf;
-          const content = document.getElementById("pdf-content-wrapper");
+          const content = pdfSummaryRef.current;
           if(content) {
             html2canvas(content, {scale: 2}).then(canvas => {
               const pdf = new jsPDF('p', 'mm', 'a4');
               const imgData = canvas.toDataURL('image/png');
               const pdfWidth = pdf.internal.pageSize.getWidth();
-              const pageHeight = 295; 
+              const pageHeight = pdf.internal.pageSize.getHeight();
               const imgHeight = canvas.height * pdfWidth / canvas.width;
               let heightLeft = imgHeight;
               let position = 25;
+
               pdf.setFontSize(16);
               pdf.text("Berekeningsgrondslagen & Samenvatting", 14, 15);
-              pdf.addImage(imgData, 'PNG', 10, position, pdfWidth - 20, imgHeight > (pageHeight-position) ? (pageHeight-position-10) : imgHeight);
-              heightLeft -= (pageHeight-position-10);
-              while (heightLeft > 0) {
+
+              pdf.addImage(imgData, 'PNG', 10, position, pdfWidth - 20, imgHeight);
+              heightLeft -= pageHeight;
+
+              while (heightLeft >= 0) {
                 position = heightLeft - imgHeight;
                 pdf.addPage();
                 pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, imgHeight);
