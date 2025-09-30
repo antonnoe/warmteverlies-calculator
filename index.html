@@ -24,7 +24,6 @@
 </head>
 <body>
   <div id="app"></div>
-  <div id="pdf-summary" class="hidden"></div>
 
   <script type="text/babel">
     const { useState, useMemo, useCallback, useRef } = React;
@@ -49,7 +48,7 @@
     const num = (v, d = 0) => { const n = parseFloat(String(v).replace(',', '.')); return Number.isFinite(n) ? n : d; };
 
     const Icon = ({ path, className = "w-6 h-6" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d={path} /></svg>;
-    const icons = { building: "M3.75 21.75a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zM4.5 9.75a.75.75 0 01.75-.75h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75zM4.5 15.75a.75.75 0 01.75-.75h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75zM8.25 2.25a.75.75 0 01.75.75v16.5a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM15.75 2.25a.75.75 0 01.75.75v16.5a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75z", fire: "M15.362 4.362a1.75 1.75 0 012.474 0 1.75 1.75 0 010 2.474l-5.333 5.333-3.724-3.724a.75.75 0 011.06-1.06l2.664 2.664 5.333-5.333a.75.75 0 01-1.06-1.06l-5.333 5.333-2.664-2.664a1.75 1.75 0 010-2.474 1.75 1.75 0 012.474 0l2.664 2.664 5.333-5.333z", bolt: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.25 4.5h13.5c.828 0 1.5.672 1.5 1.5v3.75c0 .828-.672 1.5-1.5 1.5H5.25c-.828 0-1.5-.672-1.5-1.5V6c0-.828.672-1.5 1.5-1.5z", beaker: "M9.75 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM14.25 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 18a8.25 8.25 0 100-16.5 8.25 8.25 0 000 16.5z", currency: "M12 1.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0112 1.5zM18.75 6a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5zM12 21a.75.75 0 01-.75-.75v-1.5a.75.75 0 011.5 0v1.5A.75.75 0 0112 21zM5.25 6a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5z", faq: "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z", debug: "M11.42 15.17L17.17 20.92M5.58 11.42L11.33 17.17M12.75 5.58L18.5 11.33M6.92 6.92L12.67 12.67M3.08 15.17L8.83 20.92M9.75 3.08L15.5 8.83M16.58 5.58L22.33 11.33M11.33 1.25L17.08 7M18.5 1.25L24.25 7" };
+    const icons = { building: "M3.75 21.75a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zM4.5 9.75a.75.75 0 01.75-.75h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75zM4.5 15.75a.75.75 0 01.75-.75h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75zM8.25 2.25a.75.75 0 01.75.75v16.5a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM15.75 2.25a.75.75 0 01.75.75v16.5a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75z", fire: "M15.362 4.362a1.75 1.75 0 012.474 0 1.75 1.75 0 010 2.474l-5.333 5.333-3.724-3.724a.75.75 0 011.06-1.06l2.664 2.664 5.333-5.333a.75.75 0 01-1.06-1.06l-5.333 5.333-2.664-2.664a1.75 1.75 0 010-2.474 1.75 1.75 0 012.474 0l2.664 2.664 5.333-5.333z", bolt: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.25 4.5h13.5c.828 0 1.5.672 1.5 1.5v3.75c0 .828-.672 1.5-1.5 1.5H5.25c-.828 0-1.5-.672-1.5-1.5V6c0-.828.672-1.5 1.5-1.5z", beaker: "M9.75 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75-.75zM14.25 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 18a8.25 8.25 0 100-16.5 8.25 8.25 0 000 16.5z", currency: "M12 1.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0112 1.5zM18.75 6a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5zM12 21a.75.75 0 01-.75-.75v-1.5a.75.75 0 011.5 0v1.5A.75.75 0 0112 21zM5.25 6a.75.75 0 000-1.5h-1.5a.75.75 0 000 1.5h1.5z", faq: "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z", debug: "M11.42 15.17L17.17 20.92M5.58 11.42L11.33 17.17M12.75 5.58L18.5 11.33M6.92 6.92L12.67 12.67M3.08 15.17L8.83 20.92M9.75 3.08L15.5 8.83M16.58 5.58L22.33 11.33M11.33 1.25L17.08 7M18.5 1.25L24.25 7" };
     
     const Tooltip = ({ text }) => (
       <div className="tooltip">
@@ -145,7 +144,8 @@
             const hdd = ZONES.find(z => z.id === zone)?.hdd || 2200;
             const UA = num(wallA) * num(wallU) + num(roofA) * num(roofU) + num(floorA) * num(floorU) + num(winA) * num(winU);
             const Vloss = 0.34 * num(volume) * num(ach);
-            const heatDemand = (UA + Vloss) * hdd / 1000 * (1 + num(warmupPct) / 100);
+            const heatDemandBase = (UA + Vloss) * hdd * 24 / 1000;
+            const heatDemand = heatDemandBase * (1 + num(warmupPct) / 100);
             
             const auxFrac = auxType === 'none' ? 0 : Math.min(0.9, num(auxShare) / 100);
             const mainFrac = 1 - auxFrac;
@@ -177,8 +177,9 @@
                 const pumpKwh = (num(poolPumpW) / 1000) * num(poolPumpH) * days;
                 const ambientTemp = ZONES.find(z => z.id === zone)?.pool_temp || 19;
                 const deltaT = Math.max(0, num(poolTargetT) - ambientTemp);
-                const thermalLossFactor = 1.16 * (poolCover === 'true' ? 0.5 : 1) * num(poolWind);
-                const thermal = num(poolVol) * deltaT * thermalLossFactor * num(poolSeason) * (30 / 5); 
+                const thermalLossFactor = (poolCover === 'true' ? 0.5 : 1.0) * num(poolWind);
+                const thermalDaily = num(poolVol) * deltaT * 1.16 * thermalLossFactor;
+                const thermal = thermalDaily * days;
 
                 const def = POOL_HEAT.find(h => h.key === poolHeatType);
                 const eff = def?.scop ? num(poolHpScop, 4) : (def?.eta ? num(poolEta, 0.9) : 1);
@@ -203,10 +204,11 @@
 
             return {
                 totalCost, perMonth: totalCost / 12,
+                heatDemand,
                 costs: { verwarming: mainCost + auxCost, tapwater: dhwCost, apparaten: applKwh * pricesKwh.elec, ev: evKwhYear * pricesKwh.elec, zwembad: pool.cost, pvWaarde: -pvSelfValue },
                 verbruik: { nettoElec: elecNet, brutoElec: elecTotalGross, pvEigen: pvSelf, warmte: mainInput + auxInput, tapwater: dhwInput, overig: applKwh + evKwhYear + pool.kwh },
                 inputs: { zone, setpoint, wallA, wallU, roofA, roofU, floorA, floorU, winA, winU, volume, ach, mainType, auxType, dhwType, pvKwp, evKmWeek },
-                debug: { heatDemand, mainFrac, auxFrac, mainEff, mainInput, auxInput, elecHeatingInput, elecTotalGross, pvSelf, elecNet, totalCost }
+                debug: { heatDemand, mainFrac, auxFrac, mainEff, mainInput, auxInput, elecHeatingInput, elecTotalGross, pvSelf, elecNet, totalCost, UA, Vloss }
             };
         }, [ zone, setpoint, wallA, wallU, roofA, roofU, floorA, floorU, winA, winU, volume, ach, warmupPct, userPrices, mainType, mainScop, mainEta, auxType, auxSharePreset, auxShareCustom, auxScop, auxEta, pvKwp, pvSelfUse, dhwType, dhwScop, dhwEta, showers, litersPer, coldT, hotT, appls, evKmWeek, evKwh100, evLoss, poolHas, poolVol, poolTargetT, poolSeason, poolHeatType, poolHpScop, poolEta, poolPumpW, poolPumpH, poolCover, poolWind ]);
 
@@ -219,18 +221,19 @@
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
                 const imgHeight = canvas.height * pdfWidth / canvas.width;
                 
                 pdf.setFontSize(16);
                 pdf.text("Samenvatting Energiecalculator", 14, 15);
                 
-                if (imgHeight < pdfHeight - 25) {
-                   pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, imgHeight);
-                } else {
-                   pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, pdfHeight - 35);
+                // Fit image on one page, scaling if necessary
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                let finalImgHeight = imgHeight;
+                if (imgHeight > (pageHeight - 30)) {
+                  finalImgHeight = pageHeight - 30;
                 }
-
+                
+                pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, finalImgHeight);
                 pdf.save("samenvatting-energiecalculator.pdf");
               } catch(e) {
                 console.error("PDF generation failed:", e);
@@ -410,6 +413,7 @@
                         <AccordionSection number={7} title="Debug Paneel (voor controle)" icon={<Icon path={icons.debug} />}>
                            <div className="text-xs font-mono bg-gray-800 text-white p-4 rounded-lg overflow-x-auto">
                             <h4 className="font-semibold mb-2 text-yellow-400">Reken-Audit</h4>
+                            <p>UA (transmissie): {results.debug.UA.toFixed(2)} W/K</p><p>Hvent (ventilatie): {results.debug.Vloss.toFixed(2)} W/K</p>
                             <p>Warmtevraag: {fmt.format(results.debug.heatDemand)} kWh</p>
                             <p>Verdeling H/B: {fmt.format(results.debug.mainFrac*100)}% / {fmt.format(results.debug.auxFrac*100)}%</p>
                             <p>Efficiëntie Hoofd: {results.debug.mainEff.toFixed(2)}</p>
@@ -461,23 +465,22 @@
                 </div>
                 
                 <div id="pdf-content-wrapper" className="hidden print:block" ref={pdfSummaryRef}>
-                  <div className="p-8">
-                    <h2 className="text-2xl font-bold mb-6">Samenvatting Invoer & Resultaten</h2>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold border-b pb-2">Belangrijkste Resultaten</h3>
+                  <div className="p-4 bg-white">
+                    <h2 className="text-xl font-bold mb-4">Samenvatting Energiecalculator</h2>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      <div className="col-span-2 border-t pt-2">
+                        <h3 className="font-semibold">Resultaten</h3>
                         <p><b>Totale Jaarkosten:</b> {money(results.totalCost)}</p>
                         <p><b>Warmtevraag:</b> {fmt.format(results.heatDemand)} kWh/jaar</p>
                         <p><b>Netto Elektra van Net:</b> {fmt.format(results.verbruik.nettoElec)} kWh/jaar</p>
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold border-b pb-2">Belangrijkste Invoer</h3>
+                      <div className="col-span-2 border-t pt-2">
+                         <h3 className="font-semibold">Invoer</h3>
                         <p><b>Klimaatzone:</b> {ZONES.find(z=>z.id === results.inputs.zone)?.name || 'n/a'}</p>
                         <p><b>Hoofdverwarming:</b> {HEAT_MAIN.find(h=>h.key === results.inputs.mainType)?.label || 'n/a'}</p>
-                        <p><b>Bijverwarming:</b> {HEAT_AUX.find(h=>h.key === results.inputs.auxType)?.label || 'n/a'}</p>
                       </div>
-                      <div className="col-span-2 space-y-2">
-                        <h3 className="text-lg font-semibold border-b pb-2">Isolatie (U-waarden)</h3>
+                      <div className="col-span-2 border-t pt-2">
+                        <h3 className="font-semibold">Isolatie (U-waarden)</h3>
                         <p>Muur: {results.inputs.wallU} | Dak: {results.inputs.roofU} | Vloer: {results.inputs.floorU} | Ramen: {results.inputs.winU}</p>
                       </div>
                     </div>
