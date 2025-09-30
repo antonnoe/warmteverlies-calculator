@@ -14,11 +14,6 @@
   <style>
     :root { --brand-color: #800000; }
     body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
-    .accordion-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
   </style>
 </head>
 <body>
@@ -43,18 +38,10 @@
     const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
 
     const Icon = ({ path, className = "w-6 h-6" }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d={path} /></svg>;
-    const icons = {
-        building: "M12.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5zM3.75 8.25a.75.75 0 000 1.5h3v1.5a.75.75 0 001.5 0v-1.5h3a.75.75 0 000-1.5h-3v-1.5a.75.75 0 00-1.5 0v1.5h-3zM6.75 16.5a.75.75 0 00-1.5 0v1.5h-1.5a.75.75 0 000 1.5h1.5v1.5a.75.75 0 001.5 0v-1.5h1.5a.75.75 0 000-1.5h-1.5v-1.5z",
-        fire: "M15.362 4.362a1.75 1.75 0 012.474 0 1.75 1.75 0 010 2.474l-5.333 5.333-3.724-3.724a.75.75 0 011.06-1.06l2.664 2.664 5.333-5.333a.75.75 0 01-1.06-1.06l-5.333 5.333-2.664-2.664a1.75 1.75 0 010-2.474 1.75 1.75 0 012.474 0l2.664 2.664 5.333-5.333z",
-        bolt: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.25 4.5h13.5c.828 0 1.5.672 1.5 1.5v3.75c0 .828-.672 1.5-1.5 1.5H5.25c-.828 0-1.5-.672-1.5-1.5V6c0-.828.672-1.5 1.5-1.5z",
-        sun: "M12 3.75a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0112 3.75zM10.5 6.375a.75.75 0 00-1.06-1.06L8.375 6.375a.75.75 0 001.06 1.06l1.065-1.06zM3.75 12a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 013.75 12zM8.375 17.625a.75.75 0 00-1.06 1.06l1.065 1.065a.75.75 0 001.06-1.06L8.375 17.625zM17.625 8.375a.75.75 0 001.06-1.06L17.625 6.375a.75.75 0 00-1.06 1.06l1.06 1.06zM12 18.75a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 01.75-.75zM17.625 17.625a.75.75 0 001.06 1.06l1.06-1.06a.75.75 0 00-1.06-1.06l-1.06 1.06zM18.75 12a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75z",
-        beaker: "M9.75 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM14.25 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 18a8.25 8.25 0 100-16.5 8.25 8.25 0 000 16.5z",
-        currency: "M2.25 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM6 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM10.5 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM15 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM19.5 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12z"
-    };
+    const icons = { building: "M12.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5zM3.75 8.25a.75.75 0 000 1.5h3v1.5a.75.75 0 001.5 0v-1.5h3a.75.75 0 000-1.5h-3v-1.5a.75.75 0 00-1.5 0v1.5h-3zM6.75 16.5a.75.75 0 00-1.5 0v1.5h-1.5a.75.75 0 000 1.5h1.5v1.5a.75.75 0 001.5 0v-1.5h1.5a.75.75 0 000-1.5h-1.5v-1.5z", fire: "M15.362 4.362a1.75 1.75 0 012.474 0 1.75 1.75 0 010 2.474l-5.333 5.333-3.724-3.724a.75.75 0 011.06-1.06l2.664 2.664 5.333-5.333a.75.75 0 01-1.06-1.06l-5.333 5.333-2.664-2.664a1.75 1.75 0 010-2.474 1.75 1.75 0 012.474 0l2.664 2.664 5.333-5.333z", bolt: "M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.25 4.5h13.5c.828 0 1.5.672 1.5 1.5v3.75c0 .828-.672 1.5-1.5 1.5H5.25c-.828 0-1.5-.672-1.5-1.5V6c0-.828.672-1.5 1.5-1.5z", beaker: "M9.75 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM14.25 21.75a.75.75 0 01-.75-.75V11.25a.75.75 0 011.5 0v9.75a.75.75 0 01-.75.75zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 18a8.25 8.25 0 100-16.5 8.25 8.25 0 000 16.5z", currency: "M2.25 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM6 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM10.5 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM15 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12zM19.5 18.75a.75.75 0 001.5 0v-12a.75.75 0 00-1.5 0v12z" };
 
     const AccordionSection = ({ icon, title, number, children, initiallyOpen = false }) => {
         const [isOpen, setIsOpen] = useState(initiallyOpen);
-        const contentRef = React.useRef(null);
 
         return (
             <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -63,9 +50,11 @@
                         <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-[var(--brand-color)]">{icon}</div>
                         <span className="font-semibold text-lg text-gray-800">{number}. {title}</span>
                     </div>
-                    <Icon path={isOpen ? "M19.5 12h-15" : "M12 4.5v15m7.5-7.5h-15"} className="w-5 h-5 text-gray-500 transition-transform" />
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                      <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clipRule="evenodd" />
+                    </svg>
                 </button>
-                <div ref={contentRef} className="accordion-content" style={{ maxHeight: isOpen ? contentRef.current.scrollHeight + "px" : "0" }}>
+                <div className={`overflow-hidden transition-[max-height] duration-500 ease-in-out ${isOpen ? 'max-h-[2000px]' : 'max-h-0'}`}>
                     <div className="p-4 pt-0">{children}</div>
                 </div>
             </div>
