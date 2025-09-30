@@ -205,6 +205,7 @@
                 totalCost, perMonth: totalCost / 12,
                 costs: { verwarming: mainCost + auxCost, tapwater: dhwCost, apparaten: applKwh * pricesKwh.elec, ev: evKwhYear * pricesKwh.elec, zwembad: pool.cost, pvWaarde: -pvSelfValue },
                 verbruik: { nettoElec: elecNet, brutoElec: elecTotalGross, pvEigen: pvSelf, warmte: mainInput + auxInput, tapwater: dhwInput, overig: applKwh + evKwhYear + pool.kwh },
+                inputs: { zone, setpoint, wallA, wallU, roofA, roofU, floorA, floorU, winA, winU, volume, ach, mainType, auxType, dhwType, pvKwp, evKmWeek },
                 debug: { heatDemand, mainFrac, auxFrac, mainEff, mainInput, auxInput, elecHeatingInput, elecTotalGross, pvSelf, elecNet, totalCost }
             };
         }, [ zone, setpoint, wallA, wallU, roofA, roofU, floorA, floorU, winA, winU, volume, ach, warmupPct, userPrices, mainType, mainScop, mainEta, auxType, auxSharePreset, auxShareCustom, auxScop, auxEta, pvKwp, pvSelfUse, dhwType, dhwScop, dhwEta, showers, litersPer, coldT, hotT, appls, evKmWeek, evKwh100, evLoss, poolHas, poolVol, poolTargetT, poolSeason, poolHeatType, poolHpScop, poolEta, poolPumpW, poolPumpH, poolCover, poolWind ]);
@@ -214,15 +215,27 @@
           const content = pdfSummaryRef.current;
           if (content) {
             html2canvas(content, { scale: 2, useCORS: true }).then(canvas => {
-              const pdf = new jsPDF('p', 'mm', 'a4');
-              const imgData = canvas.toDataURL('image/png');
-              const pdfWidth = pdf.internal.pageSize.getWidth();
-              const imgHeight = canvas.height * pdfWidth / canvas.width;
-              
-              pdf.setFontSize(16);
-              pdf.text("Samenvatting Energiecalculator", 14, 15);
-              pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, imgHeight);
-              pdf.save("samenvatting-energiecalculator.pdf");
+              try {
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgData = canvas.toDataURL('image/png');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgHeight = canvas.height * pdfWidth / canvas.width;
+                
+                pdf.setFontSize(16);
+                pdf.text("Samenvatting Energiecalculator", 14, 15);
+                
+                if (imgHeight < pdfHeight - 25) {
+                   pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, imgHeight);
+                } else {
+                   pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, pdfHeight - 35);
+                }
+
+                pdf.save("samenvatting-energiecalculator.pdf");
+              } catch(e) {
+                console.error("PDF generation failed:", e);
+                alert("Er is een fout opgetreden bij het genereren van de PDF.");
+              }
             });
           }
         };
@@ -447,7 +460,7 @@
                     </div>
                 </div>
                 
-                <div id="pdf-content-wrapper" className="hidden" ref={pdfSummaryRef}>
+                <div id="pdf-content-wrapper" className="hidden print:block" ref={pdfSummaryRef}>
                   <div className="p-8">
                     <h2 className="text-2xl font-bold mb-6">Samenvatting Invoer & Resultaten</h2>
                     <div className="grid grid-cols-2 gap-x-8 gap-y-4">
