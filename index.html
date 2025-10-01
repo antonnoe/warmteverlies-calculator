@@ -19,7 +19,6 @@
     .tooltip { position: relative; display: inline-flex; }
     .tooltip .tooltip-text { visibility: hidden; width: 250px; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -125px; opacity: 0; transition: opacity 0.3s; font-weight: 400; }
     .tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
-    @media print { .no-print { display: none !important; } #pdf-summary { display: block !important; } body { font-size: 10px; color: black; } h1, h2, h3 { color: black !important; } }
   </style>
 </head>
 <body>
@@ -152,8 +151,8 @@
             
             const mainDef = HEAT_MAIN.find(h => h.key === mainType);
             const auxDef = HEAT_AUX.find(h => h.key === auxType) || {};
-            const mainEff = mainDef?.scop ? num(mainScop, 3.2) : (mainDef?.eta ? num(mainEta, 0.9) : (mainDef?.eff || 1));
-            const auxEff = auxDef?.scop ? num(auxScop, 3.2) : (auxDef?.eta ? num(auxEta, 0.85) : 1);
+            const mainEff = mainDef?.scop ? num(mainScop) : (mainDef?.eta ? num(mainEta) : (mainDef?.eff || 1));
+            const auxEff = auxDef?.scop ? num(auxScop) : (auxDef?.eta ? num(auxEta) : 1);
             const mainInput = heatDemand * mainFrac / mainEff;
             const auxInput = auxDef.key === 'none' ? 0 : (heatDemand * auxFrac / auxEff);
             const mainCost = (pricesKwh[mainDef?.priceKey] || 0) * mainInput;
@@ -164,7 +163,7 @@
             
             const dhwThermal = (num(showers) * num(litersPer) * 365 * Math.max(0, num(hotT) - num(coldT)) * 4.186) / 3600;
             const dhwDef = DHW_TYPES.find(d => d.key === dhwType);
-            const dhwEff = dhwDef?.scop ? num(dhwScop, 2.5) : (dhwDef?.eta ? num(dhwEta, 0.9) : 1);
+            const dhwEff = dhwDef?.scop ? num(dhwScop) : (dhwDef?.eta ? num(dhwEta) : 1);
             const dhwInput = dhwThermal / dhwEff;
             const dhwCost = (pricesKwh[dhwDef?.priceKey] || 0) * dhwInput;
             
@@ -182,7 +181,7 @@
                 const thermal = thermalDaily * days;
 
                 const def = POOL_HEAT.find(h => h.key === poolHeatType);
-                const eff = def?.scop ? num(poolHpScop, 4) : (def?.eta ? num(poolEta, 0.9) : 1);
+                const eff = def?.scop ? num(poolHpScop) : (def?.eta ? num(poolEta) : 1);
                 const input = def.key === 'none' ? 0 : (thermal / eff);
                 const elecUse = pumpKwh + (def?.priceKey === 'elec' ? input : 0);
                 const gasUse = (def?.priceKey === 'gas' ? input : 0);
@@ -207,7 +206,6 @@
                 heatDemand,
                 costs: { verwarming: mainCost + auxCost, tapwater: dhwCost, apparaten: applKwh * pricesKwh.elec, ev: evKwhYear * pricesKwh.elec, zwembad: pool.cost, pvWaarde: -pvSelfValue },
                 verbruik: { nettoElec: elecNet, brutoElec: elecTotalGross, pvEigen: pvSelf, warmte: mainInput + auxInput, tapwater: dhwInput, overig: applKwh + evKwhYear + pool.kwh },
-                inputs: { zone, setpoint, wallA, wallU, roofA, roofU, floorA, floorU, winA, winU, volume, ach, mainType, auxType, dhwType, pvKwp, evKmWeek },
                 debug: { heatDemand, mainFrac, auxFrac, mainEff, mainInput, auxInput, elecHeatingInput, elecTotalGross, pvSelf, elecNet, totalCost, UA, Vloss }
             };
         }, [ zone, setpoint, wallA, wallU, roofA, roofU, floorA, floorU, winA, winU, volume, ach, warmupPct, userPrices, mainType, mainScop, mainEta, auxType, auxSharePreset, auxShareCustom, auxScop, auxEta, pvKwp, pvSelfUse, dhwType, dhwScop, dhwEta, showers, litersPer, coldT, hotT, appls, evKmWeek, evKwh100, evLoss, poolHas, poolVol, poolTargetT, poolSeason, poolHeatType, poolHpScop, poolEta, poolPumpW, poolPumpH, poolCover, poolWind ]);
@@ -221,16 +219,15 @@
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
                 const imgHeight = canvas.height * pdfWidth / canvas.width;
                 
                 pdf.setFontSize(16);
                 pdf.text("Samenvatting Energiecalculator", 14, 15);
                 
-                // Fit image on one page, scaling if necessary
-                const pageHeight = pdf.internal.pageSize.getHeight();
                 let finalImgHeight = imgHeight;
-                if (imgHeight > (pageHeight - 30)) {
-                  finalImgHeight = pageHeight - 30;
+                if (imgHeight > (pdfHeight - 30)) {
+                  finalImgHeight = pdfHeight - 30;
                 }
                 
                 pdf.addImage(imgData, 'PNG', 10, 25, pdfWidth - 20, finalImgHeight);
@@ -455,7 +452,7 @@
                     </div>
                 </main>
                 
-                <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 p-3 no-print shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+                <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 p-3 no-print shadow-[0_-4px_12px_rgba(0,0,0,0.06)] z-10">
                     <div className="max-w-7xl mx-auto flex items-center justify-center lg:justify-end">
                         <div className="text-center">
                             <div className="text-sm text-gray-600">Totale Jaarkosten</div>
@@ -464,10 +461,10 @@
                     </div>
                 </div>
                 
-                <div id="pdf-content-wrapper" className="hidden" ref={pdfSummaryRef}>
-                  <div className="p-8 bg-white text-black">
+                <div className="hidden" ref={pdfSummaryRef}>
+                  <div id="pdf-content-wrapper" className="p-8 bg-white text-black">
                     <h2 className="text-2xl font-bold mb-6 text-black">Samenvatting Energiecalculator</h2>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
                       <div className="col-span-2 border-t pt-3 space-y-1">
                         <h3 className="text-lg font-semibold text-black">Resultaten</h3>
                         <p><b>Totale Jaarkosten:</b> {money(results.totalCost)}</p>
@@ -476,12 +473,12 @@
                       </div>
                       <div className="col-span-2 border-t pt-3 space-y-1">
                          <h3 className="text-lg font-semibold text-black">Invoer</h3>
-                        <p><b>Klimaatzone:</b> {ZONES.find(z=>z.id === results.inputs.zone)?.name || 'n/a'}</p>
-                        <p><b>Hoofdverwarming:</b> {HEAT_MAIN.find(h=>h.key === results.inputs.mainType)?.label || 'n/a'}</p>
+                        <p><b>Klimaatzone:</b> {ZONES.find(z=>z.id === results.inputs?.zone)?.name || 'n/a'}</p>
+                        <p><b>Hoofdverwarming:</b> {HEAT_MAIN.find(h=>h.key === results.inputs?.mainType)?.label || 'n/a'}</p>
                       </div>
                       <div className="col-span-2 border-t pt-3">
                         <h3 className="text-lg font-semibold text-black">Isolatie (U-waarden)</h3>
-                        <p>Muur: {results.inputs.wallU} | Dak: {results.inputs.roofU} | Vloer: {results.inputs.floorU} | Ramen: {results.inputs.winU}</p>
+                        <p>Muur: {results.inputs?.wallU} | Dak: {results.inputs?.roofU} | Vloer: {results.inputs?.floorU} | Ramen: {results.inputs?.winU}</p>
                       </div>
                     </div>
                   </div>
