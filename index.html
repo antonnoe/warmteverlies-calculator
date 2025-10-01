@@ -17,6 +17,9 @@
     .tooltip { position: relative; display: inline-flex; }
     .tooltip .tooltip-text { visibility: hidden; width: 250px; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -125px; opacity: 0; transition: opacity 0.3s; font-weight: 400; }
     .tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
+    .accordion-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s ease-in-out; }
+    .accordion-content > div { overflow: hidden; }
+    .accordion-content.open { grid-template-rows: 1fr; }
     @media print {
       body * { visibility: hidden; }
       #pdf-summary, #pdf-summary * { visibility: visible; }
@@ -93,13 +96,12 @@
     
     // --- Main App Component ---
     function App() {
-        // --- Helpers moved inside App scope ---
+        // --- Helpers ---
         const fmt = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 });
         const money = (x) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(x);
         const num = (v, d=0) => { const n = parseFloat(String(v).replace(',', '.')); return Number.isFinite(n) ? n : d; };
-        const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-        // --- State declarations ---
+        
+        // --- State ---
         const [zone, setZone] = useState('paris');
         const [wallA, setWallA] = useState('120'), [wallU, setWallU] = useState('0.5');
         const [roofA, setRoofA] = useState('100'), [roofU, setRoofU] = useState('0.25');
@@ -148,16 +150,13 @@
             }, {});
             
             const auxShare = auxSharePreset === 'custom' ? num(auxShareCustom) : num(auxSharePreset);
-
             const hdd = ZONES.find(z => z.id === zone)?.hdd || 2200;
             const UA = num(wallA) * num(wallU) + num(roofA) * num(roofU) + num(floorA) * num(floorU) + num(winA) * num(winU);
             const Vloss = 0.34 * num(volume) * num(ach);
             const heatDemandBase = (UA + Vloss) * hdd * 24 / 1000;
             const heatDemand = heatDemandBase * (1 + num(warmupPct) / 100);
-            
             const auxFrac = auxType === 'none' ? 0 : Math.min(0.9, num(auxShare) / 100);
             const mainFrac = 1 - auxFrac;
-            
             const mainDef = HEAT_MAIN_DEF.find(h => h.key === mainType);
             const auxDef = HEAT_AUX_DEF.find(h => h.key === auxType) || {};
             const mainEff = (mainDef?.label.includes('SCOP')) ? num(mainScop, 1) : ((mainDef?.label.includes('η')) ? num(mainEta, 0.1) : 1);
@@ -166,16 +165,13 @@
             const auxInput = auxDef.key === 'none' ? 0 : (heatDemand * auxFrac / auxEff);
             const mainCost = (pricesKwh[mainDef?.priceKey] || 0) * mainInput;
             const auxCost = (pricesKwh[auxDef?.priceKey] || 0) * auxInput;
-
             const pvYield = num(pvKwp) > 0 ? num(pvKwp) * (PV_YIELD[zone] || 1150) : 0;
             const pvSelf = pvYield * (num(pvSelfUse) / 100);
-            
             const dhwThermal = (num(showers) * num(litersPer) * 365 * Math.max(0, 40 - 12) * 4.186) / 3600;
             const dhwDef = DHW_TYPES_DEF.find(d => d.key === dhwType);
             const dhwEff = (dhwDef?.label.includes('SCOP')) ? num(dhwScop, 1) : ((dhwDef?.label.includes('η')) ? num(dhwEta, 0.1) : 1);
             const dhwInput = dhwThermal / dhwEff;
             const dhwCost = (pricesKwh[dhwDef?.priceKey] || 0) * dhwInput;
-            
             const applKwh = appls.reduce((s, a) => s + (a.on ? num(a.kwh, 0) : 0), 0);
             const evKwhYear = (num(evKmWeek) * 52) * (num(evKwh100) / 100) * (1 + num(evLoss) / 100);
 
@@ -188,7 +184,6 @@
                 const thermalLossFactor = (poolCover === 'true' ? 0.5 : 1.0) * num(poolWind);
                 const thermalDaily = num(poolVol) * deltaT * 1.16 * thermalLossFactor;
                 const thermal = thermalDaily * days;
-
                 const def = POOL_HEAT_DEF.find(h => h.key === poolHeatType);
                 const eff = (def?.label.includes('SCOP')) ? num(poolHpScop, 1) : ((def?.label.includes('η')) ? num(poolEta, 0.1) : 1);
                 const input = def.key === 'none' ? 0 : (thermal / eff);
@@ -203,11 +198,9 @@
             const elecTotalGross = elecHeatingInput + elecDhwInput + applKwh + evKwhYear + pool.elec;
             const elecNet = Math.max(0, elecTotalGross - pvSelf);
             const pvSelfValue = pvSelf * (pricesKwh.elec || 0);
-
             const nonElecMainCost = mainDef?.priceKey !== 'elec' ? mainCost : 0;
             const nonElecAuxCost = auxDef?.priceKey !== 'elec' ? auxCost : 0;
             const nonElecDhwCost = dhwDef?.priceKey !== 'elec' ? dhwCost : 0;
-            
             const finalTotalCost = (elecNet * pricesKwh.elec) + nonElecMainCost + nonElecAuxCost + nonElecDhwCost + (pool.gas * (pricesKwh.gas || 0));
 
             return {
@@ -251,7 +244,7 @@
         );
         
         return (
-            <div className="pb-24 no-print">
+            <div>
                 <header className="bg-white border-b border-gray-200 p-4 no-print">
                     <div className="max-w-7xl mx-auto flex justify-between items-center">
                       <div>
@@ -272,7 +265,7 @@
                                 <Select label="Klimaatzone" value={zone} onChange={setZone} options={ZONES} />
                                 <NumberInput label="Binnen temperatuur" value={setpoint} onChange={setSetpoint} unit="°C" />
                                 <NumberInput label="Verwarmd volume" value={volume} onChange={setVolume} unit="m³" />
-                                <NumberInput label="Luchtwisseling (n)" value={ach} onChange={setAch} unit="1/uur" step="0.1" tooltip="Een maat voor kieren en ventilatie. Kies 0,5 voor een modern, goed geïsoleerd huis; 1,0-1,5 voor een ouder, 'ademend' huis."/>
+                                <NumberInput label="Luchtwisseling (n)" value={ach} onChange={setAch} unit="1/uur" tooltip="Een maat voor kieren en ventilatie. Kies 0,5 voor een modern, goed geïsoleerd huis; 1,0-1,5 voor een ouder, 'ademend' huis."/>
                             </div>
                             <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                               <h3 className="text-md font-semibold mb-3">Isolatie (Oppervlakte & U-waarde)</h3>
@@ -287,7 +280,7 @@
                                   return (<div key={key}>
                                     <div className="grid grid-cols-2 gap-2">
                                       <NumberInput label={`${name} (A)`} value={area} onChange={setArea} unit="m²" />
-                                      <NumberInput label="U-waarde" value={uValue} onChange={setUValue} unit="U" step="0.05" tooltip="Warmtedoorgangscoëfficiënt. Hoe lager, hoe beter de isolatie."/>
+                                      <NumberInput label="U-waarde" value={uValue} onChange={setUValue} unit="U" tooltip="Warmtedoorgangscoëfficiënt. Hoe lager, hoe beter de isolatie."/>
                                     </div>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                       {Object.entries(presets).map(([label, value]) => (
@@ -305,59 +298,139 @@
                                     <h3 className="font-semibold mb-2">Ruimteverwarming</h3>
                                     <div className="space-y-4">
                                         <Select label="Hoofdverwarming" value={mainType} onChange={setMainType} options={HEAT_MAIN_DEF} />
-                                        {mainType === 'hp' && <NumberInput label="SCOP Hoofd-WP" value={mainScop} onChange={setMainScop} step="0.1" tooltip="Seizoensgemiddeld rendement van de warmtepomp. Bijv. 3.2 betekent dat 1 kWh elektra 3.2 kWh warmte levert." />}
-                                        {HEAT_MAIN_DEF.find(h=>h.key===mainType)?.label.includes('η') && <NumberInput label="Rendement η Hoofd" value={mainEta} onChange={setMainEta} step="0.01" tooltip="Efficiëntie van de ketel. 0.9 = 90% van de brandstof wordt nuttige warmte."/>}
+                                        {mainType === 'hp' && <NumberInput label="SCOP Hoofd-WP" value={mainScop} onChange={setMainScop} tooltip="Seizoensgemiddeld rendement van de warmtepomp. Bijv. 3.2 betekent dat 1 kWh elektra 3.2 kWh warmte levert." />}
+                                        {HEAT_MAIN_DEF.find(h=>h.key===mainType)?.label.includes('η') && <NumberInput label="Rendement η Hoofd" value={mainEta} onChange={setMainEta} tooltip="Efficiëntie van de ketel. 0.9 = 90% van de brandstof wordt nuttige warmte."/>}
                                         <Select label="Bijverwarming" value={auxType} onChange={setAuxType} options={HEAT_AUX_DEF} />
                                         {auxType !== 'none' && (<div>
                                           <Select label="Aandeel bijverwarming" value={auxSharePreset} onChange={setAuxSharePreset} options={[ {value: '10', label: 'Incidenteel (~10%)'}, {value: '25', label: 'Regelmatig (~25%)'}, {value: '50', label: 'Vaak (~50%)'}, {value: '70', label: 'Bijna dagelijks (~70%)'}, {value: 'custom', label: 'Zelf invullen...'} ]} />
                                           {auxSharePreset === 'custom' && <NumberInput label="Zelf invullen" value={auxShareCustom} onChange={setAuxShareCustom} unit="%" />}
                                         </div>)}
-                                        {auxType === 'inverter' && <NumberInput label="SCOP Bij-WP (Airco)" value={auxScop} onChange={setAuxScop} step="0.1" tooltip="Seizoensgemiddeld rendement van de airco in verwarmingsmodus."/>}
-                                        {HEAT_AUX_DEF.find(h=>h.key===auxType)?.label.includes('η') && <NumberInput label="Rendement η Bij" value={auxEta} onChange={setAuxEta} step="0.01" tooltip="Efficiëntie van de kachel/haard. Een open haard heeft een zeer laag rendement."/>}
+                                        {auxType === 'inverter' && <NumberInput label="SCOP Bij-WP (Airco)" value={auxScop} onChange={setAuxScop} tooltip="Seizoensgemiddeld rendement van de airco in verwarmingsmodus."/>}
+                                        {HEAT_AUX_DEF.find(h=>h.key===auxType)?.label.includes('η') && <NumberInput label="Rendement η Bij" value={auxEta} onChange={setAuxEta} tooltip="Efficiëntie van de kachel/haard. Een open haard heeft een zeer laag rendement."/>}
                                     </div>
                                 </div>
                                  <div>
                                     <h3 className="font-semibold mb-2">Warm Tapwater (ECS)</h3>
                                     <div className="space-y-4">
                                          <Select label="Type tapwater systeem" value={dhwType} onChange={setDhwType} options={DHW_TYPES_DEF} />
-                                         {dhwType === 'hp' && <NumberInput label="SCOP WP-boiler" value={dhwScop} onChange={setDhwScop} step="0.1" />}
-                                         {DHW_TYPES_DEF.find(d=>d.key===dhwType)?.label.includes('η') && <NumberInput label="Rendement η" value={dhwEta} onChange={setDhwEta} step="0.01" />}
-                                         <NumberInput label="Douches per dag" value={showers} onChange={setShowers} step="0.5" />
+                                         {dhwType === 'hp' && <NumberInput label="SCOP WP-boiler" value={dhwScop} onChange={setDhwScop} />}
+                                         {DHW_TYPES_DEF.find(d=>d.key===dhwType)?.label.includes('η') && <NumberInput label="Rendement η" value={dhwEta} onChange={setDhwEta} />}
+                                         <NumberInput label="Douches per dag" value={showers} onChange={setShowers} />
                                          <NumberInput label="Liters per douche" value={litersPer} onChange={setLitersPer} unit="L" />
                                     </div>
                                 </div>
                              </div>
                         </AccordionSection>
                         <AccordionSection number={3} title="Elektra: Verbruikers & PV" icon={ICONS.bolt}>
-                           {/* ... Content for section 3 ... */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="font-semibold mb-2">Zonnepanelen (PV)</h3>
+                                    <div className="space-y-4">
+                                        <NumberInput label="PV Systeem" value={pvKwp} onChange={setPvKwp} unit="kWp" />
+                                        <NumberInput label="Eigenverbruik" value={pvSelfUse} onChange={setPvSelfUse} unit="%" tooltip="Percentage van de opgewekte zonnestroom dat u direct zelf verbruikt. De rest wordt aan het net geleverd."/>
+                                    </div>
+                                    <h3 className="font-semibold mb-2 mt-6">Elektrische Auto (EV)</h3>
+                                    <div className="space-y-4">
+                                        <NumberInput label="Kilometers per week" value={evKmWeek} onChange={setEvKmWeek} unit="km" />
+                                        <NumberInput label="Verbruik" value={evKwh100} onChange={setEvKwh100} unit="kWh/100km" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold mb-2">Apparaten & Verlichting</h3>
+                                    <div className="space-y-2">
+                                        {appls.map((a, idx) => (
+                                            <div key={a.key} className="flex items-center justify-between bg-gray-50 p-2 rounded-md border">
+                                                <label className="flex items-center gap-2 text-sm">
+                                                    <input type="checkbox" checked={a.on} onChange={e => setAppls(appls.map((item, i) => i === idx ? { ...item, on: e.target.checked } : item))} />
+                                                    {a.label}
+                                                </label>
+                                                <input type="text" inputMode="decimal" value={a.kwh} onChange={e => setAppls(appls.map((item, i) => i === idx ? { ...item, kwh: e.target.value } : item))} className="w-20 p-1 border rounded text-sm text-right" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </AccordionSection>
                         <AccordionSection number={4} title="Optioneel: Zwembad" icon={ICONS.beaker}>
-                           {/* ... Content for section 4 ... */}
+                             <label className="flex items-center gap-2 mb-4">
+                                <input type="checkbox" checked={poolHas} onChange={e => setPoolHas(e.target.checked)} />
+                                Activeer zwembadmodule
+                            </label>
+                            {poolHas && <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <NumberInput label="Volume" value={poolVol} onChange={setPoolVol} unit="m³" />
+                                <NumberInput label="Doel temperatuur" value={poolTargetT} onChange={setPoolTargetT} unit="°C" />
+                                <NumberInput label="Seizoen" value={poolSeason} onChange={setPoolSeason} unit="mnd" />
+                                <Select label="Verwarming" value={poolHeatType} onChange={setPoolHeatType} options={POOL_HEAT_DEF} />
+                                {poolHeatType === 'hp' && <NumberInput label="SCOP WP" value={poolHpScop} onChange={setPoolHpScop} />}
+                                <NumberInput label="Pomp vermogen" value={poolPumpW} onChange={setPoolPumpW} unit="W" />
+                                <NumberInput label="Pomp uren/dag" value={poolPumpH} onChange={setPoolPumpH} unit="uur" />
+                                <Select label="Afdekking" value={poolCover} onChange={setPoolCover} options={[{value: 'true', label: 'Ja'}, {value: 'false', label: 'Nee'}]} />
+                            </div>}
                         </AccordionSection>
                         <AccordionSection number={5} title="Energieprijzen" icon={ICONS.currency}>
-                           {/* ... Content for section 5 ... */}
+                           <p className="text-xs text-gray-500 mb-4">Voer hier uw eigen tarieven in per gangbare eenheid. De calculator rekent dit om naar een prijs per kWh. Dit zijn indicatieve waarden.</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {Object.keys(ENERGY_UNITS).map(key => (
+                                    <NumberInput key={key} label={{'elec':'Elektriciteit', 'gas':'Gas', 'fioul':'Fioul', 'pellet':'Houtpellets', 'wood':'Stookhout', 'propaan':'Propaan', 'petroleum':'Petroleum'}[key]} value={userPrices[key]} onChange={val => setUserPrices(p => ({ ...p, [key]: val }))} unit={ENERGY_UNITS[key]} />
+                                ))}
+                            </div>
                         </AccordionSection>
                         <AccordionSection number={6} title="Veelgestelde Vragen & Rekenregels" icon={ICONS.faq}>
-                           {/* ... Content for section 6 ... */}
+                           {FAQ_CONTENT.map(item => (
+                             <details key={item.q} className="mb-2"><summary className="cursor-pointer font-medium text-sm">{item.q}</summary><p className="mt-2 text-sm text-neutral-700 pl-4 border-l-2 ml-2" dangerouslySetInnerHTML={{__html: item.a}}></p></details>
+                           ))}
+                           <h4 className="font-semibold mt-4 mb-2">Rekengrondslagen (kort overzicht)</h4>
+                           <ul className="text-xs text-neutral-600 space-y-1 list-disc pl-5">
+                            <li>Transmissie: Htr = Σ(U · A) [W/K]</li>
+                            <li>Ventilatie: Hvent = 0,34 · n · V [W/K]</li>
+                            <li>Jaarwarmtevraag: E ≈ (Htr + Hvent) · HDD · 24 / 1000 [kWh/j]</li>
+                            <li>Warmtepomp/airco: el-vraag = warmtevraag / SCOP</li>
+                           </ul>
                         </AccordionSection>
                         <AccordionSection number={7} title="Debug Paneel (voor controle)" icon={ICONS.debug}>
-                           {/* ... Content for section 7 ... */}
+                           <div className="text-xs font-mono bg-gray-800 text-white p-4 rounded-lg overflow-x-auto">
+                            <h4 className="font-semibold mb-2 text-yellow-400">Reken-Audit</h4>
+                            <p>UA (transmissie): {results.debug.UA.toFixed(2)} W/K</p><p>Hvent (ventilatie): {results.debug.Vloss.toFixed(2)} W/K</p>
+                            <p>Warmtevraag: {fmt.format(results.debug.heatDemand)} kWh</p>
+                            <p>Verdeling H/B: {fmt.format(results.debug.mainFrac*100)}% / {fmt.format(results.debug.auxFrac*100)}%</p>
+                            <p>Efficiëntie Hoofd: {results.debug.mainEff.toFixed(2)}</p>
+                            <p>Input Hoofd: {fmt.format(results.debug.mainInput)} kWh</p>
+                            <p>Input Bij: {fmt.format(results.debug.auxInput)} kWh</p>
+                            <p className="mt-2 border-t border-gray-600 pt-2">Totaal Elektra Bruto: {fmt.format(results.debug.elecTotalGross)} kWh</p>
+                            <p>PV Eigen Verbruik: {fmt.format(results.debug.pvSelf)} kWh</p>
+                            <p>Totaal Elektra Netto: {fmt.format(results.debug.elecNet)} kWh</p>
+                            <p className="mt-2 border-t border-gray-600 pt-2 font-bold text-green-400">Eindkosten: {money(results.debug.totalCost)}</p>
+                           </div>
                         </AccordionSection>
                     </div>
 
                     <div className="lg:col-span-1 space-y-4 lg:sticky top-4 self-start no-print">
-                      {/* ... Summary cards ... */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-lg">
+                            <div className="text-center">
+                                <div className="text-sm text-gray-600">Totale Geschatte Jaarkosten</div>
+                                <div className="text-4xl font-bold my-2 text-[var(--brand-color)]">{money(results.totalCost)}</div>
+                                <div className="text-gray-500">{money(results.perMonth)} / maand</div>
+                            </div>
+                            <div className="mt-4 space-y-2 border-t pt-4">
+                                {Object.entries(results.costs).map(([key, value]) => (
+                                    <div key={key} className="flex justify-between text-sm">
+                                        <span className="text-gray-600 capitalize">{key.replace('Waarde', ' Waarde')}</span>
+                                        <span className={`font-medium ${value < 0 ? 'text-green-600' : 'text-gray-800'}`}>{money(value)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                         <div className="bg-white p-4 rounded-xl border border-gray-200">
+                             <h3 className="font-semibold mb-2">Energiebalans (per jaar)</h3>
+                             <div className="space-y-3">
+                                 <SummaryCard title="Netto Elektra van net" value={results.verbruik.nettoElec} unit="kWh">Bruto: {fmt.format(results.verbruik.brutoElec)} kWh | PV Eigen: {fmt.format(results.verbruik.pvEigen)} kWh</SummaryCard>
+                                 <SummaryCard title="Warmte (input, alle bronnen)" value={results.verbruik.warmte} unit="kWh eq." />
+                                 <SummaryCard title="Tapwater (input)" value={results.verbruik.tapwater} unit="kWh" />
+                                 <SummaryCard title="Overig (App, EV, Zwembad)" value={results.verbruik.overig} unit="kWh" />
+                             </div>
+                         </div>
                     </div>
                 </main>
-                
-                <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 p-3 no-print shadow-[0_-4px_12px_rgba(0,0,0,0.06)] z-10">
-                    <div className="max-w-7xl mx-auto flex items-center justify-center lg:justify-end">
-                        <div className="text-center">
-                            <div className="text-sm text-gray-600">Totale Jaarkosten</div>
-                            <div className="text-2xl font-bold text-[var(--brand-color)]">{money(results.totalCost)}</div>
-                        </div>
-                    </div>
-                </div>
                 
                 <div id="pdf-summary">
                   <PdfContent />
