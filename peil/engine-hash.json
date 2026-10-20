@@ -1,0 +1,4 @@
+{
+  "toelichting": "Vastgelegde sha256 van het waardenblok in engine/engine.js (van '// ===== Waarden uit Peil' tot '// ===== Helpers'). Dit blok is gelijk in energieportaal, if-mobiel en deze repo; wijzig de waarden in alle drie en werk de hash overal bij.",
+  "waardenblok": "b1c96d635c114290128a8e485c58c6503c98b31ba10b1cf0247f83b06d66adcb"
+}

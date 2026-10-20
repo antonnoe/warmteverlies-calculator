@@ -1,0 +1,172 @@
+{
+  "stand": "2026-10-20",
+  "registerversie": "1.3.1",
+  "toelichting": "Kopie van de waarden uit Peil, het parameterregister van Communities Abroad. Waarde null met status te_verifieren of aanname: het register heeft daar nog geen vastgestelde waarde; de tool toont die als standaard of aanname. tests/peil.test.mjs vergelijkt de tool hiermee.",
+  "parameters": [
+    {
+      "id": "p.fr.energie.apparaatverbruik_per_jaar",
+      "naam": "Apparaatverbruik per jaar",
+      "status": "raming",
+      "waarde": {
+        "koel_vriescombinatie": 315,
+        "wasmachine_plus_droger": 265,
+        "vaatwasser": 133,
+        "televisie": 155,
+        "verlichting": 89
+      },
+      "waarde_weergave": "Gemiddeld volgens ADEME in kWh per jaar, uw verbruik kan afwijken; IT en kleine verbruikers zijn aannames",
+      "bron_url": "https://agirpourlatransition.ademe.fr/",
+      "verificatiedatum": "2026-10-20"
+    },
+    {
+      "id": "p.fr.energie.graaddagen_per_klimaatzone",
+      "naam": "Graaddagen en referentietemperatuur per klimaatzone",
+      "status": "te_verifieren",
+      "waarde": null,
+      "waarde_weergave": null,
+      "bron_url": null,
+      "verificatiedatum": null
+    },
+    {
+      "id": "p.fr.energie.koeldagen_en_zwembadtemperatuur",
+      "naam": "Koeldagen en zwembadtemperatuur per klimaatzone",
+      "status": "te_verifieren",
+      "waarde": null,
+      "waarde_weergave": null,
+      "bron_url": null,
+      "verificatiedatum": null
+    },
+    {
+      "id": "p.fr.energie.omrekenfactoren_kwh",
+      "naam": "Omrekenfactoren naar kWh per eenheid",
+      "status": "te_verifieren",
+      "waarde": null,
+      "waarde_weergave": null,
+      "bron_url": "https://www.legifrance.gouv.fr/eli/arrete/2006/9/15/SOCU0611881A/jo/texte",
+      "verificatiedatum": null
+    },
+    {
+      "id": "p.fr.energie.prijs_elektriciteit_trve",
+      "naam": "Elektriciteitsprijs, tarief réglementé (TRVE)",
+      "status": "vastgesteld",
+      "waarde": 0.2001,
+      "waarde_weergave": "0,2001 euro per kWh TTC bij 3 en 6 kVA (0,1985 bij 9 tot 15 kVA), tarief réglementé Bleu optie Base, geldig sinds 1 augustus 2026",
+      "bron_url": "https://www.cre.fr/fileadmin/Documents/Open_data/Marches_de_detail/Option_Base.csv",
+      "verificatiedatum": "2026-10-20",
+      "abonnement_per_jaar_ttc": {
+        "3_kva": 145.76,
+        "6_kva": 190.81
+      },
+      "toelichting": "CRE-délibération 2026-147; het abonnement komt bovenop de prijs per kWh."
+    },
+    {
+      "id": "p.fr.energie.prijs_fioul",
+      "naam": "Stookolieprijs (fioul)",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "standaard 1,13 euro per liter (gemiddelde 2025, SDES/DGEC)",
+      "bron_url": "https://www.statistiques.developpement-durable.gouv.fr/media/9748/download?inline",
+      "verificatiedatum": "2026-10-20"
+    },
+    {
+      "id": "p.fr.energie.prijs_gas_prix_repere",
+      "naam": "Gasprijs, prix repère van de CRE",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "standaard 1,40 euro per m³ (ongeveer 0,14 euro per kWh, gemiddelde 2025, SDES/DGEC); omrekening naar m³ is een aanname",
+      "bron_url": "https://www.statistiques.developpement-durable.gouv.fr/media/9748/download?inline",
+      "verificatiedatum": "2026-10-20"
+    },
+    {
+      "id": "p.fr.energie.prijs_hout",
+      "naam": "Brandhoutprijs",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "standaard 90 euro per stère (ongeveer 0,05 euro per kWh, ADEME, prijzen 2024); omrekening naar stère is een aanname",
+      "bron_url": "https://data.ademe.fr/datasets/cs96hfhstex57-iurc8jdqu5",
+      "verificatiedatum": "2026-10-20"
+    },
+    {
+      "id": "p.fr.energie.prijs_pellets",
+      "naam": "Pelletprijs",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "standaard 0,40 euro per kg (ADEME, prijzen 2024, 85 euro per MWh)",
+      "bron_url": "https://data.ademe.fr/datasets/cs96hfhstex57-iurc8jdqu5",
+      "verificatiedatum": "2026-10-20"
+    },
+    {
+      "id": "p.fr.energie.prijs_petroleum",
+      "naam": "Lampolieprijs (pétrole lampant)",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "standaard 2,00 euro per liter, eigen schatting van de tool, geen overheidsbron",
+      "bron_url": null,
+      "verificatiedatum": null
+    },
+    {
+      "id": "p.fr.energie.prijs_propaan",
+      "naam": "Propaanprijs",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "standaard 1,80 euro per liter, eigen schatting van de tool, geen overheidsbron",
+      "bron_url": null,
+      "verificatiedatum": null
+    },
+    {
+      "id": "p.fr.energie.pv_opbrengst_per_klimaatzone",
+      "naam": "PV-opbrengst per klimaatzone",
+      "status": "te_verifieren",
+      "waarde": null,
+      "waarde_weergave": null,
+      "bron_url": null,
+      "verificatiedatum": null
+    },
+    {
+      "id": "p.fr.energie.standaardprijzen_invoer",
+      "naam": "Standaard energieprijzen als invulwaarde",
+      "status": "aanname",
+      "waarde": null,
+      "waarde_weergave": "Standaardprijzen in de tool, door de gebruiker aan te passen naar de eigen factuur: elektriciteit 0,2001 euro per kWh (vastgesteld tarief, abonnement komt er los bij), gas 1,40 euro per m³, fioul 1,13 euro per liter, pellets 0,40 euro per kg, hout 90 euro per stère (aannames, gemiddelden 2024 en 2025), propaan 1,80 en petroleum 2,00 euro per liter (eigen schatting)",
+      "bron_url": "https://www.statistiques.developpement-durable.gouv.fr/media/9748/download?inline",
+      "verificatiedatum": "2026-10-20"
+    },
+    {
+      "id": "p.fr.energie.u_waarden_isolatieniveau",
+      "naam": "U-waarden per isolatieniveau",
+      "status": "vastgesteld",
+      "waarde": {
+        "muur": [
+          2.5,
+          0.84,
+          0.36,
+          0.23
+        ],
+        "dak": [
+          2.5,
+          0.32,
+          0.2,
+          0.14
+        ],
+        "vloer": [
+          2,
+          0.74,
+          0.27,
+          0.23
+        ]
+      },
+      "waarde_weergave": "DPE-methode 3CL, standaardwaarden per bouwperiode, klimaatzone H2 (voor 1975, 1983-1988, 2006-2012, vanaf 2013); de koppeling van de vier isolatieniveaus aan die perioden is een aanname van de tool; raamwaarden zijn aannames, behalve enkel glas 4,9 en modern dubbelglas 1,6 (PVC-kozijn)",
+      "bron_url": "https://gitlab.com/observatoire-dpe/observatoire-dpe/-/blob/master/modele_donnee/valeur_tables.xlsx",
+      "verificatiedatum": "2026-10-20",
+      "waarde_ramen": {
+        "status": "aanname",
+        "waarden": [
+          4.9,
+          2.8,
+          1.6,
+          1
+        ]
+      }
+    }
+  ]
+}

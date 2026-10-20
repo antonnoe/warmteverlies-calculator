@@ -13,19 +13,53 @@ const ZONES = [
 
 const PV_YIELD = { med: 1450, ouest: 1250, paris: 1150, centre: 1200, est: 1150, mont: 1100 };
 
-const DEFAULT_APPLIANCES = [
-  { key: 'fridge',   label: 'Koelkast/vriezer',       kwh: 250, on: true,  scales: false },
-  { key: 'wash',     label: 'Wassen/drogen',          kwh: 220, on: true,  scales: true  },
-  { key: 'dish',     label: 'Vaatwasser',              kwh: 160, on: true,  scales: true  },
-  { key: 'it',       label: 'IT & randapparatuur',     kwh: 150, on: true,  scales: true  },
-  { key: 'tv',       label: 'TV & media',              kwh: 120, on: true,  scales: true  },
-  { key: 'small',    label: 'Kleine verbruikers',      kwh: 150, on: true,  scales: true  },
-  { key: 'lighting', label: 'Verlichting (LED)',        kwh: 180, on: true,  scales: true  }
-];
+// ===== Waarden uit Peil: één configuratieplek =====
+// Alle standaardwaarden hieronder komen uit Peil (het parameterregister van Communities Abroad) of zijn
+// als aanname gemarkeerd. Per waarde staan bron en jaar erbij. Peil-id's verwijzen naar peil/waarden.json;
+// tests/peil.test.mjs bewaakt dat beide overeenkomen. Stand van de controle: PEIL_WAARDEN_STAND.
+const PEIL_WAARDEN_STAND = '2026-10-20';
 
-const PRICE_DEFAULTS_USER = { elec: 0.25, gas: 1.20, fioul: 1.15, pellet: 0.60, wood: 85, propaan: 1.80, petroleum: 2.00 };
+// Status: 'vastgesteld' = officiële bron, 'raming' = gemeten gemiddelde van een overheidsinstantie,
+// 'aanname' = keuze van de tool (marktprijs of eigen koppeling), zichtbaar als standaard die de gebruiker kan aanpassen.
+const PRIJS_INFO = {
+  elec:      { waarde: 0.2001, status: 'vastgesteld', peilId: 'p.fr.energie.prijs_elektriciteit_trve',
+               bron: 'CRE, tarief réglementé Bleu optie Base, 3 en 6 kVA, TTC, geldig sinds 1 augustus 2026',
+               toelichting: 'Het abonnement (145,76 euro per jaar bij 3 kVA, 190,81 euro bij 6 kVA) komt er los bij; de tool rekent het niet mee.' },
+  gas:       { waarde: 1.40, status: 'aanname', peilId: 'p.fr.energie.prijs_gas_prix_repere',
+               bron: 'SDES/DGEC, gemiddelde huishoudprijs 2025, ongeveer 0,14 euro per kWh',
+               toelichting: 'De omrekening naar euro per m³ (10 kWh per m³) is een aanname van de tool.' },
+  fioul:     { waarde: 1.13, status: 'aanname', peilId: 'p.fr.energie.prijs_fioul',
+               bron: 'SDES/DGEC, gemiddelde huishoudprijs 2025' },
+  pellet:    { waarde: 0.40, status: 'aanname', peilId: 'p.fr.energie.prijs_pellets',
+               bron: 'ADEME, prijzen 2024, geleverd los gestort, 85 euro per MWh' },
+  wood:      { waarde: 90, status: 'aanname', peilId: 'p.fr.energie.prijs_hout',
+               bron: 'ADEME, prijzen 2024, ongeveer 0,05 euro per kWh',
+               toelichting: 'De omrekening naar euro per stère (1.800 kWh per stère) is een aanname van de tool.' },
+  propaan:   { waarde: 1.80, status: 'aanname', peilId: 'p.fr.energie.prijs_propaan',
+               bron: 'eigen schatting van de tool, geen overheidsbron' },
+  petroleum: { waarde: 2.00, status: 'aanname', peilId: 'p.fr.energie.prijs_petroleum',
+               bron: 'eigen schatting van de tool, geen overheidsbron' }
+};
+const PRICE_DEFAULTS_USER = { elec: PRIJS_INFO.elec.waarde, gas: PRIJS_INFO.gas.waarde, fioul: PRIJS_INFO.fioul.waarde, pellet: PRIJS_INFO.pellet.waarde, wood: PRIJS_INFO.wood.waarde, propaan: PRIJS_INFO.propaan.waarde, petroleum: PRIJS_INFO.petroleum.waarde };
 const ENERGY_UNITS        = { elec: '€/kWh', gas: '€/m³', fioul: '€/L', pellet: '€/kg', wood: '€/stère', propaan: '€/L', petroleum: '€/L' };
 const KWH_CONVERSION      = { elec: 1, gas: 10, fioul: 10, pellet: 5, wood: 1800, propaan: 7.1, petroleum: 10 };
+// Tekst bij de prijzen, in gewone taal.
+const PRIJS_UITLEG = 'Dit zijn standaardprijzen: pas ze aan naar uw factuur. Elektriciteit volgt het officiële gereguleerde tarief (tarif réglementé, CRE, sinds 1 augustus 2026); de overige prijzen zijn gemiddelden uit 2024 of 2025 en dus een aanname. Een abonnement rekent de tool niet mee: dat komt er los bij.';
+
+// Apparaatverbruik per jaar: raming, gemiddelde volgens ADEME. Het verbruik van uw eigen apparaten kan afwijken.
+// bron A: ADEME, "Électricité: quels appareils consomment le plus", bijgewerkt 7 mei 2026.
+// bron B: ADEME, panel ElecDom, mediaan over de meetjaren 2019 tot 2024.
+const APPARATEN_PEIL_ID = 'p.fr.energie.apparaatverbruik_per_jaar';
+const APPARATEN_UITLEG = 'Gemiddeld volgens ADEME, uw verbruik kan afwijken. Waar een apparaat geen ADEME-cijfer heeft (IT en kleine verbruikers) is het een aanname.';
+const DEFAULT_APPLIANCES = [
+  { key: 'fridge',   label: 'Koelkast/vriezer',       kwh: 315, on: true,  scales: false, status: 'raming',  bron: 'ADEME 2026, koel-vriescombinatie' },
+  { key: 'wash',     label: 'Wassen/drogen',          kwh: 265, on: true,  scales: true,  status: 'raming',  bron: 'ADEME 2026, wasmachine 85 plus droger 180' },
+  { key: 'dish',     label: 'Vaatwasser',              kwh: 133, on: true,  scales: true,  status: 'raming',  bron: 'ADEME ElecDom, mediaan' },
+  { key: 'it',       label: 'IT & randapparatuur',     kwh: 150, on: true,  scales: true,  status: 'aanname', bron: 'eigen schatting van de tool' },
+  { key: 'tv',       label: 'TV & media',              kwh: 155, on: true,  scales: true,  status: 'raming',  bron: 'ADEME 2026, televisie' },
+  { key: 'small',    label: 'Kleine verbruikers',      kwh: 150, on: true,  scales: true,  status: 'aanname', bron: 'eigen schatting van de tool' },
+  { key: 'lighting', label: 'Verlichting (LED)',        kwh: 89,  on: true,  scales: true,  status: 'raming',  bron: 'ADEME ElecDom, mediaan' }
+];
 
 const HEAT_MAIN_DEF = [
   { key: 'elec',   label: 'Elektrisch (direct)',   priceKey: 'elec'   },
@@ -59,12 +93,17 @@ const POOL_HEAT_DEF = [
   { key: 'hp',   label: 'Warmtepomp (SCOP)',  priceKey: 'elec' }
 ];
 
+// U-waarden (W/m²K) per isolatieniveau. Bron: DPE-methode 3CL (arrêté van 31 maart 2021, annexe 1), standaardwaarden per bouwperiode, klimaatzone H2, woningen zonder elektrische verwarming.
+// De methode kent geen isolatieniveaus maar bouwperiodes. De koppeling is een aanname van de tool: niet geïsoleerd = voor 1975, matig = 1983 tot 1988, goed = 2006 tot 2012, zeer goed = vanaf 2013.
+// Dak: zolder (combles). Raam: de methode werkt per glastype en kozijn; enkel glas 4,9 en modern dubbelglas 1,6 zijn de waarden voor een PVC-kozijn, oud dubbelglas 2,8 en triple 1,0 zijn aannames.
+const U_PEIL_ID = 'p.fr.energie.u_waarden_isolatieniveau';
 const U_PRESETS = {
-  wall:  { 'Ongeïsoleerd (~1975)': 2.0, 'Matig (~5cm)': 0.8, 'Goed (~10cm)': 0.4, 'Zeer goed (15cm+)': 0.25 },
-  roof:  { 'Ongeïsoleerd': 3.0, 'Matig (~10cm)': 0.5, 'Goed (~20cm)': 0.25, 'Zeer goed (30cm+)': 0.15 },
-  floor: { 'Op zand': 2.2, 'Kruipruimte': 1.2, 'Matig geïsoleerd': 0.8, 'Goed geïsoleerd': 0.3 },
-  win:   { 'Enkel glas': 5.5, 'Oud dubbelglas': 2.8, 'Modern HR(+)': 1.6, 'Triple HR++': 1.0 }
+  wall:  { 'Niet geïsoleerd': 2.5, 'Matig (1983–88)': 0.84, 'Goed (2006–12)': 0.36, 'Zeer goed (vanaf 2013)': 0.23 },
+  roof:  { 'Niet geïsoleerd': 2.5, 'Matig (1983–88)': 0.32, 'Goed (2006–12)': 0.20, 'Zeer goed (vanaf 2013)': 0.14 },
+  floor: { 'Niet geïsoleerd': 2.0, 'Matig (1983–88)': 0.74, 'Goed (2006–12)': 0.27, 'Zeer goed (vanaf 2013)': 0.23 },
+  win:   { 'Enkel glas': 4.9, 'Oud dubbelglas': 2.8, 'Modern HR(+)': 1.6, 'Triple HR++': 1.0 }
 };
+const U_UITLEG = 'Standaardwaarden uit de DPE-methode (3CL) per bouwperiode, klimaatzone H2. De methode kent geen isolatieniveaus: dat matig bij 1983–88 hoort, goed bij 2006–12 en zeer goed bij vanaf 2013 is een aanname van deze tool. Bij ramen hangt de waarde af van glastype en kozijn: enkel glas (4,9) en modern dubbelglas (1,6) gelden voor een PVC-kozijn, oud dubbelglas (2,8) en triple (1,0) zijn aannames.';
 
 // ===== Helpers =====
 const fmt0  = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 });

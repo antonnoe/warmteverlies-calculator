@@ -539,7 +539,7 @@ const TOOL_SPEC = {
       label:    'Elektriciteitsprijs',
       unit:     '€/kWh',
       type:     'number',
-      default:  0.25,
+      default:  0.2001,
       min:      0,
       max:      5,
       validate: (v) => (v >= 0 && v <= 5) || 'Elektriciteitsprijs moet tussen 0 en 5 €/kWh liggen.'
@@ -549,7 +549,7 @@ const TOOL_SPEC = {
       label:    'Gasprijs',
       unit:     '€/m³',
       type:     'number',
-      default:  1.20,
+      default:  1.40,
       min:      0,
       max:      10,
       validate: (v) => (v >= 0 && v <= 10) || 'Gasprijs moet tussen 0 en 10 €/m³ liggen.'
@@ -559,7 +559,7 @@ const TOOL_SPEC = {
       label:    'Fioulprijs',
       unit:     '€/L',
       type:     'number',
-      default:  1.15,
+      default:  1.13,
       min:      0,
       max:      5,
       validate: (v) => (v >= 0 && v <= 5) || 'Fioulprijs moet tussen 0 en 5 €/L liggen.'
@@ -569,7 +569,7 @@ const TOOL_SPEC = {
       label:    'Houtpellets prijs',
       unit:     '€/kg',
       type:     'number',
-      default:  0.60,
+      default:  0.40,
       min:      0,
       max:      5,
       validate: (v) => (v >= 0 && v <= 5) || 'Pelletprijs moet tussen 0 en 5 €/kg liggen.'
@@ -579,7 +579,7 @@ const TOOL_SPEC = {
       label:    'Stookhoutprijs',
       unit:     '€/stère',
       type:     'number',
-      default:  85,
+      default:  90,
       min:      0,
       max:      500,
       validate: (v) => (v >= 0 && v <= 500) || 'Stookhoutprijs moet tussen 0 en 500 €/stère liggen.'
