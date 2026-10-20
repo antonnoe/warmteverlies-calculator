@@ -35,7 +35,10 @@ const param = (id) => { const p = perId.get(id); if (!p) fout(`${id} staat niet 
 // ---- 4. Elektriciteitsprijs (TRVE) overal gelijk aan Peil
 {
   const p = param("p.fr.energie.prijs_elektriciteit_trve");
-  const ab = p.abonnement_per_jaar_ttc || {};
+  const abx = (kva) => ((new RegExp(kva + " kVA (\\d+,\\d+)").exec(p.waarde_weergave || "") || [])[1]); // abonnement per jaar uit waarde_weergave, bijv. "3 kVA 145,76"
+  const ab = { "3_kva": abx(3), "6_kva": abx(6) };
+  if (!ab["3_kva"] || !ab["6_kva"]) fout("waarde_weergave van de elektriciteitsprijs noemt het abonnement voor 3 en 6 kVA niet.");
+  if (p.status) fout("De elektriciteitsprijs moet in Peil vastgesteld zijn (geen status in de kopie), nu " + p.status + ".");
   if (W.PRIJS_INFO.elec.waarde !== p.waarde) fout(`Elektriciteitsprijs in PRIJS_INFO: ${W.PRIJS_INFO.elec.waarde}, Peil ${p.waarde}.`);
   if (W.PRICE_DEFAULTS_USER.elec !== p.waarde) fout(`PRICE_DEFAULTS_USER.elec: ${W.PRICE_DEFAULTS_USER.elec}, Peil ${p.waarde}.`);
   if (W.PRIJS_INFO.elec.status !== "vastgesteld") fout("Elektriciteitsprijs moet als vastgesteld zijn gemarkeerd.");
@@ -53,20 +56,40 @@ const param = (id) => { const p = perId.get(id); if (!p) fout(`${id} staat niet 
 
 // ---- 5. Overige prijzen: aannames met bron en zichtbaar in de tool
 {
-  const ids = { gas: "p.fr.energie.prijs_gas_prix_repere", fioul: "p.fr.energie.prijs_fioul", pellet: "p.fr.energie.prijs_pellets", wood: "p.fr.energie.prijs_hout", propaan: "p.fr.energie.prijs_propaan", petroleum: "p.fr.energie.prijs_petroleum" };
-  for (const [k, id] of Object.entries(ids)) {
+  // Het register geeft de brandstofprijzen per kWh (hout en pellets per kWh PCI, gas per kWh PCS) of per liter (fioul); de tool rekent met een prijs per eenheid
+  // (gas per m3, pellets per kg, hout per stère). De test rekent de toolwaarde terug met de omrekening die de tool zelf gebruikt (KWH_CONVERSION in de tool):
+  // toolprijs per kWh = toolwaarde / KWH_CONVERSION[soort], en vergelijkt die met de registerwaarde. Voorbeeld pellets: tool 0,40 euro per kg / 5 kWh per kg = 0,080 euro per kWh, register 0,085.
+  // Afrondingsmarge: de tool toont ronde standaardprijzen en rondt de prijs per kWh af op 0,01 euro. De afwijking mag daarom hooguit een halve afrondstap zijn,
+  // 0,005 euro per kWh (grens inbegrepen, met 1e-9 voor floating point). Binnen die marge is het een afronding, daarbuiten een echte afwijking die gemeld moet worden.
+  // Fioul staat in het register per liter en in de tool ook per liter, zonder omrekening; dezelfde marge van 0,005 euro per liter.
+  const MARGE = 0.005 + 1e-9;
+  const soorten = {
+    gas:    { id: "p.fr.energie.prijs_gas_prix_repere", status: undefined, eenheid: "per kWh PCS, tool per m3" },
+    fioul:  { id: "p.fr.energie.prijs_fioul",           status: undefined, eenheid: "per liter, tool per liter", direct: true },
+    pellet: { id: "p.fr.energie.prijs_pellets",         status: "raming",   eenheid: "per kWh PCI, tool per kg" },
+    wood:   { id: "p.fr.energie.prijs_hout",            status: "raming",   eenheid: "per kWh PCI, tool per stère" }
+  };
+  for (const [k, s] of Object.entries(soorten)) {
+    const p = param(s.id), i = W.PRIJS_INFO[k];
+    if (i.peilId !== s.id) fout(`PRIJS_INFO.${k}.peilId is ${i.peilId}, verwacht ${s.id}.`);
+    if (typeof p.waarde !== "number") { fout(`${s.id}: Peil heeft geen getal als waarde (${p.waarde}).`); continue; }
+    if (p.status !== s.status) fout(`${s.id}: status in Peil is ${p.status || "vastgesteld"}, verwacht ${s.status || "vastgesteld"}; bekijk of de tool dit nog juist toont.`);
+    if (i.status !== "aanname") fout(`PRIJS_INFO.${k}: de tool toont dit als aanname (de omrekening en de afronding zijn van de tool), nu ${i.status}.`);
+    if (!i.bron) fout(`PRIJS_INFO.${k} heeft geen bron.`);
+    const inh = s.direct ? 1 : W.KWH_CONVERSION[k];
+    const perKwh = i.waarde / inh;
+    if (Math.abs(perKwh - p.waarde) > MARGE) fout(`${s.id}: tool ${i.waarde} (= ${perKwh.toFixed(4)} ${s.direct ? "per liter" : "per kWh"} bij ${inh} ${s.direct ? "" : "kWh per eenheid"}), Peil ${p.waarde} ${s.eenheid}; verschil groter dan de afrondingsmarge van 0,005.`);
+  }
+  // Propaan en petroleum: in Peil nog geen waarde (te_verifieren); de tool toont eigen schattingen als aanname.
+  for (const [k, id] of Object.entries({ propaan: "p.fr.energie.prijs_propaan", petroleum: "p.fr.energie.prijs_petroleum" })) {
     const p = param(id), i = W.PRIJS_INFO[k];
     if (i.peilId !== id) fout(`PRIJS_INFO.${k}.peilId is ${i.peilId}, verwacht ${id}.`);
-    if (p.status !== "aanname" || i.status !== "aanname") fout(`${id}: de tool en Peil moeten dit als aanname markeren (tool ${i.status}, Peil ${p.status}).`);
-    if (!i.bron) fout(`PRIJS_INFO.${k} heeft geen bron.`);
-    if (![nl(i.waarde.toFixed(2)), nl(String(i.waarde))].some((s) => (p.waarde_weergave || "").includes(s))) fout(`${id}: de standaardwaarde ${nl(i.waarde.toFixed(2))} staat niet in waarde_weergave van Peil (${p.waarde_weergave}).`);
+    if (p.status !== "te_verifieren" || p.waarde !== null) fout(`${id}: Peil heeft nu status ${p.status} en waarde ${p.waarde}; vergelijk de tool (${i.waarde}) met die waarde en pas deze test aan.`);
+    if (i.status !== "aanname" || !i.bron) fout(`PRIJS_INFO.${k} moet een aanname met bron zijn.`);
   }
-  // omrekening gas: 0,14 euro per kWh x 10 kWh per m3; hout: 0,05 x 1800
-  if (Math.abs(W.PRIJS_INFO.gas.waarde - 0.14 * W.KWH_CONVERSION.gas) > 1e-9) fout("Gasprijs per m³ is niet 0,14 x de energie-inhoud uit KWH_CONVERSION.");
-  if (Math.abs(W.PRIJS_INFO.wood.waarde - 0.05 * W.KWH_CONVERSION.wood) > 1e-9) fout("Houtprijs per stère is niet 0,05 x de energie-inhoud uit KWH_CONVERSION.");
   if (!/aanname/.test(W.PRIJS_UITLEG)) fout("PRIJS_UITLEG zegt niet dat de overige prijzen aannames zijn.");
   const st = param("p.fr.energie.standaardprijzen_invoer");
-  if (st.status !== "aanname") fout("standaardprijzen_invoer moet als aanname zijn gemarkeerd.");
+  if (st.status !== "te_verifieren" || st.waarde !== null) fout("standaardprijzen_invoer: Peil heeft nu status " + st.status + " en waarde " + st.waarde + "; pas deze test aan.");
 }
 
 // ---- 6. U-waarden per bouwperiode (3CL), apparaatverbruik (ADEME)
@@ -76,7 +99,12 @@ const param = (id) => { const p = perId.get(id); if (!p) fout(`${id} staat niet 
   if (!gelijk(vals(W.U_PRESETS.wall), w.muur)) fout(`Muur-U-waarden: tool ${JSON.stringify(vals(W.U_PRESETS.wall))}, Peil ${JSON.stringify(w.muur)}.`);
   if (!gelijk(vals(W.U_PRESETS.roof), w.dak)) fout(`Dak-U-waarden: tool ${JSON.stringify(vals(W.U_PRESETS.roof))}, Peil ${JSON.stringify(w.dak)}.`);
   if (!gelijk(vals(W.U_PRESETS.floor), w.vloer)) fout(`Vloer-U-waarden: tool ${JSON.stringify(vals(W.U_PRESETS.floor))}, Peil ${JSON.stringify(w.vloer)}.`);
-  if (!gelijk(vals(W.U_PRESETS.win), (u.waarde_ramen || {}).waarden)) fout("Raamwaarden in de tool wijken af van peil/waarden.json.");
+  // Raam: het register noemt enkel glas en modern dubbelglas (PVC-kozijn) in waarde_weergave; oud dubbelglas (2,8) en triple (1,0) zijn aannames van de tool en staan als zodanig in U_UITLEG.
+  { const rw = (re) => parseFloat(((re.exec(u.waarde_weergave || "") || [])[1] || "").replace(",", "."));
+    const w = vals(W.U_PRESETS.win);
+    if (w[0] !== rw(/enkel glas ([\d,]+)/)) fout(`Raam enkel glas: tool ${w[0]}, Peil ${rw(/enkel glas ([\d,]+)/)}.`);
+    if (w[2] !== rw(/modern dubbelglas ([\d,]+)/)) fout(`Raam modern dubbelglas: tool ${w[2]}, Peil ${rw(/modern dubbelglas ([\d,]+)/)}.`);
+    if (!W.U_UITLEG.includes("2,8") || !W.U_UITLEG.includes("1,0")) fout("U_UITLEG noemt de aannames 2,8 (oud dubbelglas) en 1,0 (triple) niet."); }
   if (vals(W.U_PRESETS.roof).includes(3) || vals(W.U_PRESETS.win).includes(5.5)) fout("Dak 3,0 en raam 5,5 komen in de methode niet voor en moeten vervallen zijn.");
   if (!/aanname/.test(W.U_UITLEG) || !/1983/.test(W.U_UITLEG)) fout("U_UITLEG zegt niet dat de koppeling aan bouwperiodes een aanname is.");
   const a = param("p.fr.energie.apparaatverbruik_per_jaar"), aw = a.waarde || {};
