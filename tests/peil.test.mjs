@@ -23,7 +23,7 @@ const nl = (n) => String(n).replace(".", ",");
 const engineCode = lees("engine", "engine.js");
 const ctx = { Intl, Math, Number, Object, console };
 vm.createContext(ctx);
-vm.runInContext(engineCode + "\n;this.__W = { PEIL_WAARDEN_STAND, PRIJS_INFO, PRICE_DEFAULTS_USER, KWH_CONVERSION, PRIJS_UITLEG, APPARATEN_UITLEG, DEFAULT_APPLIANCES, U_PRESETS, U_UITLEG, computeResults };", ctx);
+vm.runInContext(engineCode + "\n;this.__W = { PEIL_WAARDEN_STAND, PRIJS_INFO, PRICE_DEFAULTS_USER, KWH_CONVERSION, ENERGY_UNITS, PRIJS_UITLEG, APPARATEN_UITLEG, DEFAULT_APPLIANCES, U_PRESETS, U_UITLEG, computeResults };", ctx);
 const W = ctx.__W;
 
 // ---- 1. Datum en standen
@@ -63,8 +63,10 @@ const param = (id) => { const p = perId.get(id); if (!p) fout(`${id} staat niet 
   // 0,005 euro per kWh (grens inbegrepen, met 1e-9 voor floating point). Binnen die marge is het een afronding, daarbuiten een echte afwijking die gemeld moet worden.
   // Fioul staat in het register per liter en in de tool ook per liter, zonder omrekening; dezelfde marge van 0,005 euro per liter.
   const MARGE = 0.005 + 1e-9;
+  // Gas wordt in Frankrijk per kWh afgerekend. Een prijs per m3 vraagt een omrekenfactor die per netgebied en per maand verschilt; die factor hoort niet in de tool.
+  if (W.ENERGY_UNITS.gas !== "€/kWh" || W.KWH_CONVERSION.gas !== 1) fout(`Gasprijs moet per kWh zijn (eenheid ${W.ENERGY_UNITS.gas}, omrekening ${W.KWH_CONVERSION.gas}).`);
   const soorten = {
-    gas:    { id: "p.fr.energie.prijs_gas_prix_repere", status: undefined, eenheid: "per kWh PCS, tool per m3" },
+    gas:    { id: "p.fr.energie.prijs_gas_prix_repere", status: undefined, eenheid: "per kWh PCS, tool ook per kWh", direct: true },
     fioul:  { id: "p.fr.energie.prijs_fioul",           status: undefined, eenheid: "per liter, tool per liter", direct: true },
     pellet: { id: "p.fr.energie.prijs_pellets",         status: "raming",   eenheid: "per kWh PCI, tool per kg" },
     wood:   { id: "p.fr.energie.prijs_hout",            status: "raming",   eenheid: "per kWh PCI, tool per stère" }

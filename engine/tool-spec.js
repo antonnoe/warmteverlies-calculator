@@ -547,12 +547,12 @@ const TOOL_SPEC = {
     {
       id:       'price_gas',
       label:    'Gasprijs',
-      unit:     '€/m³',
+      unit:     '€/kWh',
       type:     'number',
-      default:  1.40,
+      default:  0.1414,
       min:      0,
-      max:      10,
-      validate: (v) => (v >= 0 && v <= 10) || 'Gasprijs moet tussen 0 en 10 €/m³ liggen.'
+      max:      5,
+      validate: (v) => (v >= 0 && v <= 5) || 'Gasprijs moet tussen 0 en 5 €/kWh liggen.'
     },
     {
       id:       'price_fioul',

@@ -25,9 +25,9 @@ const PRIJS_INFO = {
   elec:      { waarde: 0.2001, status: 'vastgesteld', peilId: 'p.fr.energie.prijs_elektriciteit_trve',
                bron: 'CRE, tarief réglementé Bleu optie Base, 3 en 6 kVA, TTC, geldig sinds 1 augustus 2026',
                toelichting: 'Het abonnement (145,76 euro per jaar bij 3 kVA, 190,81 euro bij 6 kVA) komt er los bij; de tool rekent het niet mee.' },
-  gas:       { waarde: 1.40, status: 'aanname', peilId: 'p.fr.energie.prijs_gas_prix_repere',
+  gas:       { waarde: 0.1414, status: 'aanname', peilId: 'p.fr.energie.prijs_gas_prix_repere',
                bron: 'SDES/DGEC, gemiddelde huishoudprijs 2025, ongeveer 0,14 euro per kWh',
-               toelichting: 'De omrekening naar euro per m³ (10 kWh per m³) is een aanname van de tool.' },
+               toelichting: 'Een landelijk gemiddelde, geen tarief: vul de kWh-prijs van uw eigen contract in. Gas wordt in Frankrijk per kWh afgerekend; de meterstand in m³ zet de netbeheerder met een eigen omrekenfactor om in kWh.' },
   fioul:     { waarde: 1.13, status: 'aanname', peilId: 'p.fr.energie.prijs_fioul',
                bron: 'SDES/DGEC, gemiddelde huishoudprijs 2025' },
   pellet:    { waarde: 0.40, status: 'aanname', peilId: 'p.fr.energie.prijs_pellets',
@@ -41,8 +41,8 @@ const PRIJS_INFO = {
                bron: 'eigen schatting van de tool, geen overheidsbron' }
 };
 const PRICE_DEFAULTS_USER = { elec: PRIJS_INFO.elec.waarde, gas: PRIJS_INFO.gas.waarde, fioul: PRIJS_INFO.fioul.waarde, pellet: PRIJS_INFO.pellet.waarde, wood: PRIJS_INFO.wood.waarde, propaan: PRIJS_INFO.propaan.waarde, petroleum: PRIJS_INFO.petroleum.waarde };
-const ENERGY_UNITS        = { elec: '€/kWh', gas: '€/m³', fioul: '€/L', pellet: '€/kg', wood: '€/stère', propaan: '€/L', petroleum: '€/L' };
-const KWH_CONVERSION      = { elec: 1, gas: 10, fioul: 10, pellet: 5, wood: 1800, propaan: 7.1, petroleum: 10 };
+const ENERGY_UNITS        = { elec: '€/kWh', gas: '€/kWh', fioul: '€/L', pellet: '€/kg', wood: '€/stère', propaan: '€/L', petroleum: '€/L' };
+const KWH_CONVERSION      = { elec: 1, gas: 1, fioul: 10, pellet: 5, wood: 1800, propaan: 7.1, petroleum: 10 };
 // Tekst bij de prijzen, in gewone taal.
 const PRIJS_UITLEG = 'Dit zijn standaardprijzen: pas ze aan naar uw factuur. Elektriciteit volgt het officiële gereguleerde tarief (tarif réglementé, CRE, sinds 1 augustus 2026); de overige prijzen zijn gemiddelden uit 2024 of 2025 en dus een aanname. Een abonnement rekent de tool niet mee: dat komt er los bij.';
 
