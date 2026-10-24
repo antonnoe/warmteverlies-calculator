@@ -17,7 +17,7 @@ const PV_YIELD = { med: 1450, ouest: 1250, paris: 1150, centre: 1200, est: 1150,
 // Alle standaardwaarden hieronder komen uit Peil (het parameterregister van Communities Abroad) of zijn
 // als aanname gemarkeerd. Per waarde staan bron en jaar erbij. Peil-id's verwijzen naar peil/waarden.json;
 // tests/peil.test.mjs bewaakt dat beide overeenkomen. Stand van de controle: PEIL_WAARDEN_STAND.
-const PEIL_WAARDEN_STAND = '2026-10-20';
+const PEIL_WAARDEN_STAND = '2026-10-24';
 
 // Status: 'vastgesteld' = officiële bron, 'raming' = gemeten gemiddelde van een overheidsinstantie,
 // 'aanname' = keuze van de tool (marktprijs of eigen koppeling), zichtbaar als standaard die de gebruiker kan aanpassen.
@@ -30,10 +30,10 @@ const PRIJS_INFO = {
                toelichting: 'Een landelijk gemiddelde, geen tarief: vul de kWh-prijs van uw eigen contract in. Gas wordt in Frankrijk per kWh afgerekend; de meterstand in m³ zet de netbeheerder met een eigen omrekenfactor om in kWh.' },
   fioul:     { waarde: 1.13, status: 'aanname', peilId: 'p.fr.energie.prijs_fioul',
                bron: 'SDES/DGEC, gemiddelde huishoudprijs 2025' },
-  pellet:    { waarde: 0.40, status: 'aanname', peilId: 'p.fr.energie.prijs_pellets',
-               bron: 'ADEME, prijzen 2024, geleverd los gestort, 85 euro per MWh' },
+  pellet:    { waarde: 0.38, status: 'aanname', peilId: 'p.fr.energie.prijs_pellets',
+               bron: 'ADEME, prijzen 2025, geleverd los gestort, 83 euro per MWh PCI, omgerekend met 4,6 kWh per kg (DPE-waarde)' },
   wood:      { waarde: 90, status: 'aanname', peilId: 'p.fr.energie.prijs_hout',
-               bron: 'ADEME, prijzen 2024, ongeveer 0,05 euro per kWh',
+               bron: 'ADEME, prijzen 2025, ongeveer 0,05 euro per kWh',
                toelichting: 'De omrekening naar euro per stère (1.800 kWh per stère) is een aanname van de tool.' },
   propaan:   { waarde: 1.80, status: 'aanname', peilId: 'p.fr.energie.prijs_propaan',
                bron: 'eigen schatting van de tool, geen overheidsbron' },
@@ -42,7 +42,7 @@ const PRIJS_INFO = {
 };
 const PRICE_DEFAULTS_USER = { elec: PRIJS_INFO.elec.waarde, gas: PRIJS_INFO.gas.waarde, fioul: PRIJS_INFO.fioul.waarde, pellet: PRIJS_INFO.pellet.waarde, wood: PRIJS_INFO.wood.waarde, propaan: PRIJS_INFO.propaan.waarde, petroleum: PRIJS_INFO.petroleum.waarde };
 const ENERGY_UNITS        = { elec: '€/kWh', gas: '€/kWh', fioul: '€/L', pellet: '€/kg', wood: '€/stère', propaan: '€/L', petroleum: '€/L' };
-const KWH_CONVERSION      = { elec: 1, gas: 1, fioul: 10, pellet: 5, wood: 1800, propaan: 7.1, petroleum: 10 };
+const KWH_CONVERSION      = { elec: 1, gas: 1, fioul: 10, pellet: 4.6, wood: 1800, propaan: 7.1, petroleum: 10 };
 // Tekst bij de prijzen, in gewone taal.
 const PRIJS_UITLEG = 'Dit zijn standaardprijzen: pas ze aan naar uw factuur. Elektriciteit volgt het officiële gereguleerde tarief (tarif réglementé, CRE, sinds 1 augustus 2026); de overige prijzen zijn gemiddelden uit 2024 of 2025 en dus een aanname. Een abonnement rekent de tool niet mee: dat komt er los bij.';
 
@@ -95,7 +95,7 @@ const POOL_HEAT_DEF = [
 
 // U-waarden (W/m²K) per isolatieniveau. Bron: DPE-methode 3CL (arrêté van 31 maart 2021, annexe 1), standaardwaarden per bouwperiode, klimaatzone H2, woningen zonder elektrische verwarming.
 // De methode kent geen isolatieniveaus maar bouwperiodes. De koppeling is een aanname van de tool: niet geïsoleerd = voor 1975, matig = 1983 tot 1988, goed = 2006 tot 2012, zeer goed = vanaf 2013.
-// Dak: zolder (combles). Raam: de methode werkt per glastype en kozijn; enkel glas 4,9 en modern dubbelglas 1,6 zijn de waarden voor een PVC-kozijn, oud dubbelglas 2,8 en triple 1,0 zijn aannames.
+// Dak: zolder (combles). Raam: de methode werkt per glastype en kozijn; enkel glas Uw 4,9 en hoogrendementsdubbelglas met Ug 1,4 (Uw 1,6) zijn de waarden voor een draaiend PVC-kozijn; voor dubbelglas bestaat geen vaste standaardwaarde, Uw volgt uit Ug en het kozijn. Oud dubbelglas 2,8 en triple 1,0 zijn aannames.
 const U_PEIL_ID = 'p.fr.energie.u_waarden_isolatieniveau';
 const U_PRESETS = {
   wall:  { 'Niet geïsoleerd': 2.5, 'Matig (1983–88)': 0.84, 'Goed (2006–12)': 0.36, 'Zeer goed (vanaf 2013)': 0.23 },
@@ -103,7 +103,7 @@ const U_PRESETS = {
   floor: { 'Niet geïsoleerd': 2.0, 'Matig (1983–88)': 0.74, 'Goed (2006–12)': 0.27, 'Zeer goed (vanaf 2013)': 0.23 },
   win:   { 'Enkel glas': 4.9, 'Oud dubbelglas': 2.8, 'Modern HR(+)': 1.6, 'Triple HR++': 1.0 }
 };
-const U_UITLEG = 'Standaardwaarden uit de DPE-methode (3CL) per bouwperiode, klimaatzone H2. De methode kent geen isolatieniveaus: dat matig bij 1983–88 hoort, goed bij 2006–12 en zeer goed bij vanaf 2013 is een aanname van deze tool. Bij ramen hangt de waarde af van glastype en kozijn: enkel glas (4,9) en modern dubbelglas (1,6) gelden voor een PVC-kozijn, oud dubbelglas (2,8) en triple (1,0) zijn aannames.';
+const U_UITLEG = 'Standaardwaarden uit de DPE-methode (3CL) per bouwperiode, klimaatzone H2. De methode kent geen isolatieniveaus: dat matig bij 1983–88 hoort, goed bij 2006–12 en zeer goed bij vanaf 2013 is een aanname van deze tool. Bij ramen hangt de waarde af van glastype en kozijn: enkel glas (Uw 4,9) en hoogrendementsdubbelglas met Ug 1,4 (Uw 1,6) gelden voor een draaiend PVC-kozijn; voor dubbelglas bestaat geen vaste standaardwaarde, Uw volgt uit Ug en het kozijn. Oud dubbelglas (2,8) en triple (1,0) zijn aannames.';
 
 // ===== Helpers =====
 const fmt0  = new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 0 });

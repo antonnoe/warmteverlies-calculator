@@ -58,7 +58,7 @@ const param = (id) => { const p = perId.get(id); if (!p) fout(`${id} staat niet 
 {
   // Het register geeft de brandstofprijzen per kWh (hout en pellets per kWh PCI, gas per kWh PCS) of per liter (fioul); de tool rekent met een prijs per eenheid
   // (gas per m3, pellets per kg, hout per stère). De test rekent de toolwaarde terug met de omrekening die de tool zelf gebruikt (KWH_CONVERSION in de tool):
-  // toolprijs per kWh = toolwaarde / KWH_CONVERSION[soort], en vergelijkt die met de registerwaarde. Voorbeeld pellets: tool 0,40 euro per kg / 5 kWh per kg = 0,080 euro per kWh, register 0,085.
+  // toolprijs per kWh = toolwaarde / KWH_CONVERSION[soort], en vergelijkt die met de registerwaarde. Voorbeeld pellets: tool 0,38 euro per kg / 4,6 kWh per kg = 0,0826 euro per kWh, register 0,083.
   // Afrondingsmarge: de tool toont ronde standaardprijzen en rondt de prijs per kWh af op 0,01 euro. De afwijking mag daarom hooguit een halve afrondstap zijn,
   // 0,005 euro per kWh (grens inbegrepen, met 1e-9 voor floating point). Binnen die marge is het een afronding, daarbuiten een echte afwijking die gemeld moet worden.
   // Fioul staat in het register per liter en in de tool ook per liter, zonder omrekening; dezelfde marge van 0,005 euro per liter.
@@ -101,11 +101,13 @@ const param = (id) => { const p = perId.get(id); if (!p) fout(`${id} staat niet 
   if (!gelijk(vals(W.U_PRESETS.wall), w.muur)) fout(`Muur-U-waarden: tool ${JSON.stringify(vals(W.U_PRESETS.wall))}, Peil ${JSON.stringify(w.muur)}.`);
   if (!gelijk(vals(W.U_PRESETS.roof), w.dak)) fout(`Dak-U-waarden: tool ${JSON.stringify(vals(W.U_PRESETS.roof))}, Peil ${JSON.stringify(w.dak)}.`);
   if (!gelijk(vals(W.U_PRESETS.floor), w.vloer)) fout(`Vloer-U-waarden: tool ${JSON.stringify(vals(W.U_PRESETS.floor))}, Peil ${JSON.stringify(w.vloer)}.`);
-  // Raam: het register noemt enkel glas en modern dubbelglas (PVC-kozijn) in waarde_weergave; oud dubbelglas (2,8) en triple (1,0) zijn aannames van de tool en staan als zodanig in U_UITLEG.
+  // Raam: het register noemt enkel glas (Uw 4,9, PVC-kozijn) in waarde_weergave; oud dubbelglas (2,8) en triple (1,0) zijn aannames van de tool en staan als zodanig in U_UITLEG.
   { const rw = (re) => parseFloat(((re.exec(u.waarde_weergave || "") || [])[1] || "").replace(",", "."));
     const w = vals(W.U_PRESETS.win);
-    if (w[0] !== rw(/enkel glas ([\d,]+)/)) fout(`Raam enkel glas: tool ${w[0]}, Peil ${rw(/enkel glas ([\d,]+)/)}.`);
-    if (w[2] !== rw(/modern dubbelglas ([\d,]+)/)) fout(`Raam modern dubbelglas: tool ${w[2]}, Peil ${rw(/modern dubbelglas ([\d,]+)/)}.`);
+    if (w[0] !== rw(/enkel glas Uw ([\d,]+)/)) fout(`Raam enkel glas: tool ${w[0]}, Peil ${rw(/enkel glas Uw ([\d,]+)/)}.`);
+    // Dubbelglas: het register noemt geen vaste standaardwaarde (Uw volgt uit Ug en het kozijn); de 1,6 van de tool is de uitkomst bij Ug 1,4 in een PVC-kozijn en staat zo in U_UITLEG.
+    if (!/geen vaste standaardwaarde/.test(u.waarde_weergave || "")) fout("Peil noemt niet meer dat voor dubbelglas geen vaste standaardwaarde bestaat; bekijk de raamwaarden van de tool.");
+    if (w[2] !== 1.6 || !/Ug 1,4/.test(W.U_UITLEG) || !/geen vaste standaardwaarde/.test(W.U_UITLEG)) fout("U_UITLEG moet zeggen dat 1,6 hoort bij Ug 1,4 en dat er geen vaste standaardwaarde voor dubbelglas is.");
     if (!W.U_UITLEG.includes("2,8") || !W.U_UITLEG.includes("1,0")) fout("U_UITLEG noemt de aannames 2,8 (oud dubbelglas) en 1,0 (triple) niet."); }
   if (vals(W.U_PRESETS.roof).includes(3) || vals(W.U_PRESETS.win).includes(5.5)) fout("Dak 3,0 en raam 5,5 komen in de methode niet voor en moeten vervallen zijn.");
   if (!/aanname/.test(W.U_UITLEG) || !/1983/.test(W.U_UITLEG)) fout("U_UITLEG zegt niet dat de koppeling aan bouwperiodes een aanname is.");

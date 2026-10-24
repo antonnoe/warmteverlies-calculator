@@ -1,6 +1,6 @@
 {
-  "stand": "2026-10-20",
-  "registerversie": "1.4.0",
+  "stand": "2026-10-24",
+  "registerversie": "1.7.0",
   "toelichting": "Kopie van de waarden uit Peil, het parameterregister van Communities Abroad. Waarde null met status te_verifieren: het register heeft daar nog geen vastgestelde waarde; de tool toont die als standaard of aanname. tests/peil.test.mjs vergelijkt de tool hiermee.",
   "parameters": [
     {
@@ -75,18 +75,18 @@
       "naam": "Brandhoutprijs",
       "status": "raming",
       "waarde": 0.05,
-      "waarde_weergave": "circa 0,05 euro per kWh PCI (38 tot 52 euro per MWh naar lengte van de blokken), geleverd, gemiddelde 2024",
+      "waarde_weergave": "circa 0,05 euro per kWh PCI (39 tot 49 euro per MWh naar lengte van de blokken), geleverd, gemiddelde 2025",
       "bron_url": "https://data.ademe.fr/datasets/cs96hfhstex57-iurc8jdqu5",
-      "verificatiedatum": "2026-10-20"
+      "verificatiedatum": "2026-10-24"
     },
     {
       "id": "p.fr.energie.prijs_pellets",
       "naam": "Pelletprijs",
       "status": "raming",
-      "waarde": 0.085,
-      "waarde_weergave": "0,085 euro per kWh PCI (85 euro per MWh), geleverd los gestort, gemiddelde 2024; circa 0,39 euro per kg bij 4,6 kWh per kg",
+      "waarde": 0.083,
+      "waarde_weergave": "0,083 euro per kWh PCI (83 euro per MWh), geleverd los gestort, gemiddelde 2025; circa 0,38 euro per kg bij 4,6 kWh per kg",
       "bron_url": "https://data.ademe.fr/datasets/cs96hfhstex57-iurc8jdqu5",
-      "verificatiedatum": "2026-10-20"
+      "verificatiedatum": "2026-10-24"
     },
     {
       "id": "p.fr.energie.prijs_petroleum",
@@ -147,7 +147,7 @@
           0.23
         ]
       },
-      "waarde_weergave": "Standaard-U-waarden uit de DPE-methode 3CL in W/m2K, klimaatzone H2, woningen zonder elektrische verwarming, bij onbekende isolatie, volgorde voor 1975 (of onbekend), 1983 tot 1988, 2006 tot 2012, vanaf 2013: muur 2,5 / 0,84 / 0,36 / 0,23; dak (combles) 2,5 / 0,32 / 0,20 / 0,14; vloer 2,0 / 0,74 / 0,27 / 0,23. Raam (PVC): enkel glas 4,9, modern dubbelglas 1,6",
+      "waarde_weergave": "Standaard-U-waarden uit de DPE-methode 3CL in W/m2K, klimaatzone H2, woningen zonder elektrische verwarming, bij onbekende isolatie, volgorde voor 1975 (of onbekend), 1983 tot 1988, 2006 tot 2012, vanaf 2013: muur 2,5 / 0,84 / 0,36 / 0,23; dak (combles) 2,5 / 0,32 / 0,20 / 0,14, dak (terrasse) 2,5 / 0,58 / 0,27 / 0,14; vloer 2,0 / 0,74 / 0,27 / 0,23. Raam (PVC, draaiend): enkel glas Uw 4,9; voor dubbelglas bestaat geen vaste standaardwaarde, Uw volgt uit Ug en het kozijn (zie de opmerking)",
       "bron_url": "https://gitlab.com/observatoire-dpe/observatoire-dpe/-/blob/master/modele_donnee/valeur_tables.xlsx",
       "verificatiedatum": "2026-10-20"
     }

@@ -569,7 +569,7 @@ const TOOL_SPEC = {
       label:    'Houtpellets prijs',
       unit:     '€/kg',
       type:     'number',
-      default:  0.40,
+      default:  0.38,
       min:      0,
       max:      5,
       validate: (v) => (v >= 0 && v <= 5) || 'Pelletprijs moet tussen 0 en 5 €/kg liggen.'
